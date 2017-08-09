@@ -1,4 +1,5 @@
-# triNURBS: experimental software to test the use of volumetric textures in a trivariate NURBS context
+# triNURBS
+## Experimental software to test the use of volumetric textures in a trivariate NURBS context
 
 The main idea is to construct a trivariate NURBS representation that could be used both as a representation of geometry and for analysis but with the key difference over existing IGA approaches that the volume is composed of a cellular or lattice geometry.
 
