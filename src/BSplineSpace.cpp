@@ -299,4 +299,14 @@ namespace trinurbs
         ost << "\n--------------------------------------\n";				
     }
     
+    std::tuple<uint, uint, uint> localElementSpaceIndices(const uint ielem,
+                                                          const uint nu,
+                                                          const uint nv)
+    {
+        const uint nuv = nu * nv;
+        const uint k = ielem / nuv;
+        
+        return std::make_tuple(ielem % nu, (ielem - k * nuv) / nu, k);
+    }
+    
 }

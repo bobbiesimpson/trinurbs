@@ -14,7 +14,7 @@
 #include "base.h"
 #include "BSplineSpace.h"
 
-namespace nurbs
+namespace trinurbs
 {
     /// A forest class is responsible for the set of Bspline spaces, associated
     /// degrees of freedom (with D components) and the connectivity between
@@ -28,7 +28,10 @@ namespace nurbs
     public:
         
         /// Default constructor. No spaces created.
-        Forest() : mGeom(nullptr), mGlobalDofN(std::make_pair(false, 0)) {}
+        Forest()
+        :   mGeom(nullptr),
+            mGlobalDofN(std::make_pair(false, 0))
+        {}
         
         /// Construct with a geometry object. The geometry pointer may be null
         /// if this forest represents a primal forest.
@@ -48,7 +51,7 @@ namespace nurbs
                 mSpaceMap.insert(std::make_pair("space" + std::to_string(s), s));
             }
             initEdgeConn();
-            initCollocConn();
+            initFaceConn();
         }
         
         /// Use default destructor
@@ -83,6 +86,7 @@ namespace nurbs
         const BSplineSpace& space(const uint i) const
         {
             assert(i < mSpaces.size());
+            
             return mSpaces.at(i);
         }
         
@@ -90,6 +94,7 @@ namespace nurbs
         const BSplineSpace& space(const uint i)
         {
             assert(i < mSpaces.size());
+            
             return mSpaces[i];
         }
         
@@ -103,15 +108,9 @@ namespace nurbs
         uint elemN() const
         {
             uint n = 0;
-            for(uint s = 0; s < spaceN(); ++s)
-                n += space(s).nonzeroKnotSpanN();
+            for(uint i = 0; i < spaceN(); ++i)
+                n += space(i).nonzeroKnotSpanN();
             return n;
-        }
-        
-        /// Get the number of collocation points
-        uint collocPtN() const
-        {
-            return globalDofN(); // same  as the number of global dof
         }
         
         /// Get the number of basis functions for a given space
@@ -120,25 +119,27 @@ namespace nurbs
             return space(ispace).basisFuncN();
         }
         
-        /// Assume smooth basis therefore # colloc points = # basis functions.
-        uint collocPtN(const uint ispace) const
-        {
-            return basisFuncN(ispace);
-        }
+        ///
+        /// TODO
+        ///
         
-        /// Get element at global index
-        const NAnalysisElement* element(const uint i) const;
+//        /// Get element at global index
+//        const NAnalysisElement* element(const uint i) const;
+//        
+//        /// Get an element given a space index and local element index
+//        const NAnalysisElement* element(const uint ispace,
+//                                        const uint ielem) const
+//        { return element(globalElI(ispace, ielem)); }
+//        
+//        /// Get element at global index
+//        const NAnalysisElement* bezierElement(const uint i) const;
+//        
+//        /// Get an element given a space index and local element index
+//        const NAnalysisElement* bezierElement(const uint ispace,
+//                                              const uint ielem) const
+//        { return bezierElement(globalElI(ispace, ielem)); }
         
-        /// Get an element given a space index and local element index
-        const NAnalysisElement* element(const uint ispace, const uint ielem) const
-        { return element(globalElI(ispace, ielem)); }
-        
-        /// Get element at global index
-        const NAnalysisElement* bezierElement(const uint i) const;
-        
-        /// Get an element given a space index and local element index
-        const NAnalysisElement* bezierElement(const uint ispace, const uint ielem) const
-        { return bezierElement(globalElI(ispace, ielem)); }
+        /// END TODO
         
         /// Get the number of elements on the given space
         const uint elemN(const uint ispace) const
@@ -149,18 +150,26 @@ namespace nurbs
         /// Get a global element index given a local (space) index numbering
         uint globalElI(const uint ispace,
                        uint i,
-                       uint j) const
+                       uint j,
+                       uint k) const
         {
-            assert(i < space(ispace).nonzeroKnotSpanN(ParamDir::S));
-            assert(j < space(ispace).nonzeroKnotSpanN(ParamDir::T));
-            const uint nel_s = space(ispace).nonzeroKnotSpanN(ParamDir::S);
-            return globalElI(ispace, nel_s * j + i);
+            // check indices are valid
+            assert(i < space(ispace).nonzeroKnotSpanN(ParamDir::U));
+            assert(j < space(ispace).nonzeroKnotSpanN(ParamDir::V));
+            assert(k < space(ispace).nonzeroKnotSpanN(ParamDir::W));
+            
+            const uint nel_u = space(ispace).nonzeroKnotSpanN(ParamDir::U);
+            const uint nel_v = space(ispace).nonzeroKnotSpanN(ParamDir::V);
+            
+            return globalElI(ispace, nel_u * nel_v * k + nel_u * j + i);
         }
         
         /// Get a global element index given an space index and local element index
-        uint globalElI(const uint ispace, const uint ielem) const
+        uint globalElI(const uint ispace,
+                       const uint ielem) const
         {
             assert(ielem < space(ispace).nonzeroKnotSpanN());
+            
             uint glb_index = 0;
             for(uint i = 0; i < ispace; ++i)
                 glb_index += space(i).nonzeroKnotSpanN();
@@ -174,6 +183,7 @@ namespace nurbs
         uint globalI(const uint sp, const uint i) const
         {
             assert(sp < spaceN() && i < space(sp).basisFuncN());
+            
             return mNodalConn.at(sp)[i];
         }
         
@@ -182,9 +192,15 @@ namespace nurbs
                             const uint iedge) const;
         
         /// Get a global index given indices for each parametric direction
-        uint globalI(const uint sp, const uint i, const uint j) const
+        uint globalI(const uint sp,
+                     const uint i,
+                     const uint j,
+                     const uint k) const
         {
-            const uint index = j * space(sp).basisFuncN(S) + i;
+            const uint nu = space(sp).basisFuncN(U);
+            const uint nv = space(sp).basisFuncN(V);
+            
+            const uint index = k * nu * nv + j * nu + i;
             return globalI(sp, index);
         }
         
@@ -193,6 +209,7 @@ namespace nurbs
         UIntVec globalIVec(const uint sp, const UIntVec& lvec) const
         {
             assert(sp < spaceN());
+            
             UIntVec rvec; // return vector
             for(const auto& v : lvec) {
                 assert(v < space(sp).basisFuncN());
@@ -206,6 +223,7 @@ namespace nurbs
         {
             assert(sp < spaceN());
             assert(e < NEDGES);
+            
             return mEdgeConn.at(sp)[e];
         }
         
@@ -213,94 +231,39 @@ namespace nurbs
         std::vector<uint> globalEdgeIVec(const uint sp) const
         {
             assert(sp < spaceN());
+            
             return mEdgeConn.at(sp);
         }
         
-        /// Get the global collocation point indes for a given space
-        /// and local index
-        uint globalCollocI(const uint sp, const uint i) const
+        /// Get global face index
+        uint globalFaceI(const uint ispace, const uint iface)
         {
-            // for now, use the global basis function connectivity
-            return globalI(sp,i);
+            assert(ispace < spaceN());
+            assert(iface < NFACES);
+            
+            return mFaceConn.at(ispace)[iface];
         }
-        
-        /// Get the global collocation point for the given space and local
-        /// collocation index
-        Point3D collocPt(const uint sp, const uint i) const;
-        
-        /// Given a space index and local collocation index,
-        /// is this collocation point connect to the space indexed by ifspace
-        /// and if it is, what is the local index of the colloc. point on
-        /// this space?
-        std::pair<bool, uint> connectedCollocPtI(const uint icspace,
-                                                 const uint icindex,
-                                                 const uint ifspace) const;
-        
-        /// Get the number of connected collocation points for the given
-        /// space and local element index
-        uint connectedCollocPtN(const uint ispace, const uint iel) const
-        {
-            const uint iglobalel = globalElI(ispace, iel);
-            return mGlobalCollocConn.at(iglobalel).size();
-        }
-        
-        /// Return the global (connected) collocation index
-        uint connectedGlobalCollocI(const uint ispace,
-                                    const uint iel,
-                                    const uint icpt) const
-        {
-            const uint iglobalel = globalElI(ispace, iel);
-            return mGlobalCollocConn.at(iglobalel)[icpt];
-        }
-        
-        /// Return the global (connected) collocation index vector
-        UIntVec connectedGlobalCollocI(const uint ispace,
-                                       const uint iel) const
-        {
-            const uint iglobalel = globalElI(ispace, iel);
-            return mGlobalCollocConn.at(iglobalel);
-        }
-        
-        /// Return the local (connected) collocation index
-        uint connectedLocalCollocI(const uint ispace,
-                                   const uint iel,
-                                   const uint icpt) const
-        {
-            const uint iglobalel = globalElI(ispace, iel);
-            return mLocalCollocConn.at(iglobalel)[icpt];
-        }
-        
-        /// Return the  local (connected) collocation index vector
-        UIntVec connectedLocalCollocI(const uint ispace,
-                                      const uint iel) const
-        {
-            const uint iglobalel = globalElI(ispace, iel);
-            return mLocalCollocConn.at(iglobalel);
-        }
-        
         
         /// An advancement over connectedEdges() in that this function can determine
         /// if there are multiple edges connected between the two spaces. This happens
         /// for instance in the torus topology.
-        std::pair<bool, std::map<Edge, Edge>> multiConnectedEdges(const uint ispace1,
-                                                                  const uint ispace2) const;
+//        std::pair<bool, std::map<Edge, Edge>> multiConnectedEdges(const uint ispace1,
+//                                                                  const uint ispace2) const;
         
         /// Return the (local) connected edges between the given spaces
         /// Assumes only one connected edge therefore deprecated.
-        bool connectedEdges(const uint ispace1,
-                            const uint ispace2,
-                            Edge& edge1,
-                            Edge& edge2) const;
-        
-        /// Return the set of connected edges between two given spaces
-        /// and global edge index.
-        bool connectedEdges(const uint ispace1,
-                            const uint ispace2,
-                            const uint iedge,
-                            Edge& edge1,
-                            Edge& edge2) const;
-        
-        
+//        bool connectedEdges(const uint ispace1,
+//                            const uint ispace2,
+//                            Edge& edge1,
+//                            Edge& edge2) const;
+//        
+//        /// Return the set of connected edges between two given spaces
+//        /// and global edge index.
+//        bool connectedEdges(const uint ispace1,
+//                            const uint ispace2,
+//                            const uint iedge,
+//                            Edge& edge1,
+//                            Edge& edge2) const;
         
         /// Number of edges in this forest
         uint edgeN() const
@@ -309,10 +272,10 @@ namespace nurbs
         }
         
         /// Return the (local) connected vertices between two spaces
-        bool connectedVertices(const uint ispace1,
-                               const uint ispace2,
-                               Vertex& vert1,
-                               Vertex& vert2) const;
+//        bool connectedVertices(const uint ispace1,
+//                               const uint ispace2,
+//                               Vertex& vert1,
+//                               Vertex& vert2) const;
         
         /// Is this edge positive or negative?
         Sign globalEdgeDir(const uint ispace, const Edge e) const;
@@ -336,23 +299,34 @@ namespace nurbs
         { return globalVertexPairI(ispace, edgeType(e)); }
         
         /// Get the knot interval pairs for this element
-        DoublePairVec knotIntervals(const uint sp, const uint iel) const
+        DoublePairVec knotIntervals(const uint ispace,
+                                    const uint iel) const
         {
-            assert(sp < spaceN() && iel < space(sp).nonzeroKnotSpanN());
-            const BSplineSpace& bspace = space(sp);
+            assert(ispace < spaceN() && iel < space(ispace).nonzeroKnotSpanN());
+            
+            const BSplineSpace& bspace = space(ispace);
             DoublePairVec p_vec;
-            const uint nel_s = bspace.uniqueKnotN(S) - 1;
-            const uint i_index = iel % nel_s;
-            const uint j_index = iel / nel_s;
-            p_vec.emplace_back(std::make_pair(bspace.uniqueKnot(i_index, S), bspace.uniqueKnot(i_index + 1, S)));
-            p_vec.emplace_back(std::make_pair(bspace.uniqueKnot(j_index, T), bspace.uniqueKnot(j_index + 1, T)));
+            
+            const uint nel_u = bspace.uniqueKnotN(U) - 1;
+            const uint nel_v = bspace.uniqueKnotN(V) - 1;
+            
+            /// Need to check this works during debugging
+            const auto tuple = localElementSpaceIndices(iel, nel_u, nel_v);
+            
+            const uint i_index = std::get<0>(tuple);;
+            const uint j_index = std::get<1>(tuple);;
+            const uint k_index = std::get<2>(tuple);
+            
+            p_vec.emplace_back(std::make_pair(bspace.uniqueKnot(i_index, U), bspace.uniqueKnot(i_index + 1, U)));
+            p_vec.emplace_back(std::make_pair(bspace.uniqueKnot(j_index, V), bspace.uniqueKnot(j_index + 1, V)));
+            p_vec.emplace_back(std::make_pair(bspace.uniqueKnot(k_index, W), bspace.uniqueKnot(k_index + 1, W)));
+            
             return p_vec;
         }
         
         /// Get the global dof for this forest
         uint globalDofN() const
         {
-            
             if(!mGlobalDofN.first) {
                 uint max = 0;
                 for(uint ispace = 0; ispace < spaceN(); ++ispace) {
@@ -382,36 +356,38 @@ namespace nurbs
         
         /// Get space indices that are vertex adjacent (not edge adjcent) to the given space
         /// and vertex
-        std::vector<uint> vertexConnectedSpaces(const uint ispace,
-                                                const Vertex v) const
-        {
-            std::vector<uint> e_vec; // spaces that are edge adjacent which need to be excluded
-            switch (v) {
-                case Vertex::VERTEX0:
-                    e_vec = {globalEdgeI(ispace, 0), globalEdgeI(ispace, 2)};
-                    break;
-                case Vertex::VERTEX1:
-                    e_vec = {globalEdgeI(ispace, 0), globalEdgeI(ispace, 3)};
-                    break;
-                case Vertex::VERTEX2:
-                    e_vec = {globalEdgeI(ispace, 2), globalEdgeI(ispace, 1)};
-                    break;
-                case Vertex::VERTEX3:
-                    e_vec = {globalEdgeI(ispace, 1), globalEdgeI(ispace, 3)};
-                    break;
-            }
-            std::vector<uint> s_vec; // vector of spaces connected at edges (including ispace)
-            for(const auto& e : e_vec)
-                for(const auto& s : connectedSpacesOnEdge(e))
-                    s_vec.push_back(s);
-            std::sort(s_vec.begin(), s_vec.end());
-            auto l = std::unique(s_vec.begin(), s_vec.end()); s_vec.erase(l, s_vec.end());
-            auto full_ivec = connectedSpacesOnVertex(globalVertexI(ispace, v));
-            std::sort(full_ivec.begin(), full_ivec.end());
-            std::vector<uint> rvec;
-            std::set_difference(s_vec.begin(), s_vec.end(), full_ivec.begin(), full_ivec.end(), std::inserter(rvec, rvec.begin()));
-            return rvec;
-        }
+//        std::vector<uint> vertexConnectedSpaces(const uint ispace,
+//                                                const Vertex v) const
+//        {
+//            std::vector<uint> e_vec; // spaces that are edge adjacent which need to be excluded
+//            switch (v) {
+//                case Vertex::VERTEX0:
+//                    e_vec = {globalEdgeI(ispace, 0), globalEdgeI(ispace, 2)};
+//                    break;
+//                case Vertex::VERTEX1:
+//                    e_vec = {globalEdgeI(ispace, 0), globalEdgeI(ispace, 3)};
+//                    break;
+//                case Vertex::VERTEX2:
+//                    e_vec = {globalEdgeI(ispace, 2), globalEdgeI(ispace, 1)};
+//                    break;
+//                case Vertex::VERTEX3:
+//                    e_vec = {globalEdgeI(ispace, 1), globalEdgeI(ispace, 3)};
+//                    break;
+//            }
+//            
+//            
+//            std::vector<uint> s_vec; // vector of spaces connected at edges (including ispace)
+//            for(const auto& e : e_vec)
+//                for(const auto& s : connectedSpacesOnEdge(e))
+//                    s_vec.push_back(s);
+//            std::sort(s_vec.begin(), s_vec.end());
+//            auto l = std::unique(s_vec.begin(), s_vec.end()); s_vec.erase(l, s_vec.end());
+//            auto full_ivec = connectedSpacesOnVertex(globalVertexI(ispace, v));
+//            std::sort(full_ivec.begin(), full_ivec.end());
+//            std::vector<uint> rvec;
+//            std::set_difference(s_vec.begin(), s_vec.end(), full_ivec.begin(), full_ivec.end(), std::inserter(rvec, rvec.begin()));
+//            return rvec;
+//        }
         
         /// Apply uniform hrefinement with n levels of refinement
         void hrefine(const uint n)
@@ -434,7 +410,7 @@ namespace nurbs
             for(uint i = 0; i < n; ++i) {
                 for(auto& s : mSpaces) {
                     const auto dvec = s.degree();
-                    if(dvec[0] == 0 || dvec[1] == 0) {
+                    if(dvec[0] == 0 || dvec[1] == 0 || dvec[2]) {
                         std::cerr << "Cannot degree reduce beyond C^0";
                         break;
                     }
@@ -444,7 +420,6 @@ namespace nurbs
             initNodalConn();
             clearElementData();
         }
-        
         
         /// Apply degree elevation n times
         void degreeElevate(const uint n)
@@ -458,7 +433,7 @@ namespace nurbs
             for(uint i = 0; i < n; ++i) {
                 for(auto& s : mSpaces) {
                     const auto dvec = s.degree();
-                    if(dvec[0] >= max_degree || dvec[1] >= max_degree) {
+                    if(dvec[0] >= max_degree || dvec[1] >= max_degree || dvec[2] >= max_degree) {
                         std::cerr << "Reached max degree p=20";
                         break;
                     }
@@ -468,7 +443,6 @@ namespace nurbs
             initNodalConn();
             clearElementData();
         }
-        
         
         /// Load from an input stream
         void load(std::istream& ist);
@@ -501,7 +475,7 @@ namespace nurbs
         {
             auto i = mSpaceMap.find(s);
             if(i == mSpaceMap.end())
-                return std::make_pair(false, INVALID_UINT);
+                return std::make_pair(false, 0);
             return std::make_pair(true, i->second);
         }
         
@@ -514,11 +488,16 @@ namespace nurbs
         /// Construct edge connectivity
         void initEdgeConn();
         
+        /// Construct face connectivity
+        void initFaceConn();
+        
         /// Clear all data related to elements (used after applying refinement)
         void clearElementData()
         {
-            mElems.clear();
-            mBezierElems.clear();
+            /// TODO
+            
+//            mElems.clear();
+//            mBezierElems.clear();
             mElemIndexMap.clear();
             mGlobalDofN = std::make_pair(false, 0);
         }
@@ -538,28 +517,36 @@ namespace nurbs
         /// Edge connectivity of trees
         std::map<uint, std::vector<uint>> mEdgeConn;
         
+        /// Face connectivity of trees
+        std::map<uint, std::vector<uint>> mFaceConn;
+        
         /// Map from edge index to connected spaces
         std::map<uint, std::vector<uint>> mEdgeSpaceMap;
         
         /// Map from corner vertex indices to connected space indices
         std::map<uint, std::vector<uint>> mCVertexSpaceMap;
         
+        /// Map from face index to connected spaces
+        std::map<uint, std::vector<uint>> mFaceSpaceMap;
+        
         /// Map from an edge index to 'sub'-edges that may arise due
         /// to T-junctions
-        std::map<uint, std::vector<uint>> mSubEdgeMap;
+//        std::map<uint, std::vector<uint>> mSubEdgeMap;
         
         /// Map from a sub-edge to its parent edge index
-        std::map<uint, uint> mSuperEdgeMap;
+//        std::map<uint, uint> mSuperEdgeMap;
         
         /// A mapping from a global element index (over all elements over all spaces) to
         /// a space index and element index local to the particular space
         mutable std::map<uint, std::pair<uint, uint>> mElemIndexMap;
         
-        /// Map from a (space, local element index) pair to an element instance
-        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mElems;
+        /// TODO
         
-        /// Map from a (space, local element index) pair to a bezier element instance
-        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mBezierElems;
+//        /// Map from a (space, local element index) pair to an element instance
+//        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mElems;
+//        
+//        /// Map from a (space, local element index) pair to a bezier element instance
+//        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mBezierElems;
         
         /// Cached global dof
         mutable std::pair<bool, uint> mGlobalDofN;
@@ -569,12 +556,6 @@ namespace nurbs
         
         /// Overload output operator
         friend std::ostream& operator<<(std::ostream& ost, const Forest& f);
-        
-        /// Static vector that defines local edge numbering
-        static std::vector<Edge> msEdgeVec;
-        
-        /// Static vector that defines local vertex numbering
-        static std::vector<Vertex> msVertexVec;
         
     };
 }

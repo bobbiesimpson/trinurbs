@@ -17,6 +17,14 @@
 
 namespace trinurbs
 {
+    /// helper functions
+    
+    /// Get the the (i,j,k) tuple given a 'space' element index and
+    /// number of elements in the u- and v- parametric directions
+    std::tuple<uint, uint, uint> localElementSpaceIndices(const uint ielem,
+                                                          const uint nu,
+                                                          const uint nv);
+    
     /// A representation of the set of basis functions that
     /// constitute a b-spline space. We deliberately separate this
     /// from the geometry information since the spaces
@@ -372,10 +380,8 @@ namespace trinurbs
         {
             const uint nu = uniqueKnotN(U) - 1;
             const uint nv = uniqueKnotN(V) - 1;
-            const uint nuv = nu * nv;
-            const uint k = iel / nuv;
             
-            return std::make_tuple(iel % nu, (iel - k * nuv) / nu, k);
+            return localElementSpaceIndices(iel, nu, nv);
         }
         
         /// Extraction operator getter
@@ -578,6 +584,8 @@ namespace trinurbs
         }
         
     };
+    
+
     
 }
 

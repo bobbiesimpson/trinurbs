@@ -166,6 +166,9 @@ namespace trinurbs
         VERTEX7 = 7
     };
     
+    /// Global const for # vertices in each cell
+    const std::size_t NVERTICES = 8;
+    
     /// Overload vertex output operator
     std::ostream& operator<<(std::ostream& ost, Vertex v);
     
@@ -200,6 +203,32 @@ namespace trinurbs
         EDGE10 = 10,
         EDGE11 = 11
     };
+    
+    /// Global const for # edges in each cell
+    const std::size_t NEDGES = 12;
+    
+    /// FACE enumeration
+    ///     -------
+    ///   /|  5   /|
+    ///  / |   1 / |
+    ///  -------   |
+    /// |2  ----|3-|
+    /// | / 0   | /
+    /// |/   4  |/
+    ///  -------
+    
+    /// Parametric coord system same as defined for Vertex numbering above
+    enum class Face {
+        FACE0 = 0,
+        FACE1,
+        FACE2,
+        FACE3,
+        FACE4,
+        FACE5
+    };
+    
+    /// Global const for # edges in each cell
+    const std::size_t NFACES = 6;
     
     /// Overload output operator
     std::ostream& operator<<(std::ostream& ost, Edge e);
