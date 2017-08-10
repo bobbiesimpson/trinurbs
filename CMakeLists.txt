@@ -16,6 +16,7 @@ include_directories(${LIB_INCLUDE_DIR})
 set(LIB_HEADERS
     ${LIB_INCLUDE_DIR}/base.h
     ${LIB_INCLUDE_DIR}/BSplineSpace.h
+    ${LIB_INCLUDE_DIR}/Forest.h
     ${LIB_INCLUDE_DIR}/InputDataStructures.h
     ${LIB_INCLUDE_DIR}/NURBSCache.h
     ${LIB_INCLUDE_DIR}/NURBSCommon.h
@@ -27,6 +28,7 @@ set(LIB_SOURCE_DIR ${trinurbs_SOURCE_DIR}/src/)
 set(LIB_SOURCES
     ${LIB_SOURCE_DIR}/base.cpp
     ${LIB_SOURCE_DIR}/BSplineSpace.cpp
+    ${LIB_SOURCE_DIR}/Forest.cpp
     ${LIB_SOURCE_DIR}/NURBSCommon.cpp
     ${LIB_SOURCE_DIR}/Point.cpp
     ${LIB_SOURCE_DIR}/Point3D.cpp
