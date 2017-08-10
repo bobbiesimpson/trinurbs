@@ -63,8 +63,9 @@ namespace trinurbs
     
     /// Enumeration of derivative type
     enum DerivType {
-        DS = 1,
-        DT = 2
+        DU = 1,
+        DV = 2,
+        DW = 3
     };
     
     /// Specifies a parametric direction

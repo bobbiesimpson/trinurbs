@@ -13,10 +13,24 @@ endif()
 set(LIB_INCLUDE_DIR ${trinurbs_SOURCE_DIR}/include)
 include_directories(${LIB_INCLUDE_DIR})
 
-set(LIB_HEADERS ${LIB_INCLUDE_DIR}/base.h)
+set(LIB_HEADERS
+    ${LIB_INCLUDE_DIR}/base.h
+    ${LIB_INCLUDE_DIR}/BSplineSpace.h
+    ${LIB_INCLUDE_DIR}/InputDataStructures.h
+    ${LIB_INCLUDE_DIR}/NURBSCache.h
+    ${LIB_INCLUDE_DIR}/NURBSCommon.h
+    ${LIB_INCLUDE_DIR}/Point.h
+    ${LIB_INCLUDE_DIR}/Point3D.h
+    ${LIB_INCLUDE_DIR}/Point4D.h)
 
 set(LIB_SOURCE_DIR ${trinurbs_SOURCE_DIR}/src/)
-set(LIB_SOURCES ${LIB_SOURCE_DIR}/base.cpp
+set(LIB_SOURCES
+    ${LIB_SOURCE_DIR}/base.cpp
+    ${LIB_SOURCE_DIR}/BSplineSpace.cpp
+    ${LIB_SOURCE_DIR}/NURBSCommon.cpp
+    ${LIB_SOURCE_DIR}/Point.cpp
+    ${LIB_SOURCE_DIR}/Point3D.cpp
+    ${LIB_SOURCE_DIR}/Point4D.cpp
     ${LIB_HEADERS})
 
 add_library(trinurbs ${LIB_SOURCES})
