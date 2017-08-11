@@ -17,13 +17,6 @@
 
 namespace trinurbs
 {
-    /// helper functions
-    
-    /// Get the the (i,j,k) tuple given a 'space' element index and
-    /// number of elements in the u- and v- parametric directions
-    std::tuple<uint, uint, uint> localElementSpaceIndices(const uint ielem,
-                                                          const uint nu,
-                                                          const uint nv);
     
     /// A representation of the set of basis functions that
     /// constitute a b-spline space. We deliberately separate this
@@ -376,13 +369,7 @@ namespace trinurbs
         
         /// Get local element indices (i,j,k) along each parametric direction
         /// given a 'global' element index.
-        std::tuple<uint, uint, uint> localIndices(const uint iel) const
-        {
-            const uint nu = uniqueKnotN(U) - 1;
-            const uint nv = uniqueKnotN(V) - 1;
-            
-            return localElementSpaceIndices(iel, nu, nv);
-        }
+        std::tuple<uint, uint, uint> localIndices(const uint iel) const;
         
         /// Extraction operator getter
         const std::vector<std::vector<double>>& extractionOperator(const uint iel,
@@ -585,7 +572,49 @@ namespace trinurbs
         
     };
     
-
+    /// helper functions
+    
+    /// Get the the (i,j,k) tuple given a 'space' element index and
+    /// number of elements in the u- and v- parametric directions
+    std::tuple<uint, uint, uint> localElementSpaceIndices(const uint ielem,
+                                                          const uint nel_u,
+                                                          const uint nel_v);
+    
+    // Get local (space) index for given vertex and # basis functions in
+    // each parametric direction
+    uint localBasisI(const Vertex v,
+                     const uint nb_u,
+                     const uint nb_v,
+                     const uint nb_w);
+    
+    /// Get local (space) index for given vertex and space
+    uint localBasisI(const Vertex v,
+                     const BSplineSpace& s);
+    
+    /// Get local (space) basis indices for given edge
+    UIntVec localBasisIVec(const Edge e,
+                           const uint nb_u,
+                           const uint nb_v,
+                           const uint nv_w);
+    
+    /// Get local (space) indicies for a given edge and space
+    UIntVec localBasisIVec(const Edge e, const BSplineSpace& s);
+    
+    /// Get ordered local vertex indices for the given edge and space
+    std::pair<uint, uint> localBasisIPair(const Edge e,
+                                          const BSplineSpace& s);
+    
+    /// Return the set of local basis function indices for a given face
+    /// using the coordinate system as defined in the comments in base.h
+    UIntVecVec localBasisIVec(const Face f, const BSplineSpace& s);
+    
+    /// Return the set of local basis function indices for a given face
+    /// using the coordinate system as defined in the comments in base.h
+    UIntVecVec localBasisIVec(const Face f,
+                              const uint nb_u,
+                              const uint nb_v,
+                              const uint nb_w);
+    
     
 }
 

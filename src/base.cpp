@@ -53,6 +53,21 @@ namespace trinurbs
         }
     }
     
+    Face faceType(const uint f)
+    {
+        switch(f)
+        {
+            case 0: return Face::FACE0;
+            case 1: return Face::FACE1;
+            case 2: return Face::FACE2;
+            case 3: return Face::FACE3;
+            case 4: return Face::FACE4;
+            case 5: return Face::FACE5;
+            default: throw std::runtime_error("Bad face index specified");
+                
+        }
+    }
+    
     Edge edgeType(const uint e)
     {
         switch (e) {

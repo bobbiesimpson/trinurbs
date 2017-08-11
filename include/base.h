@@ -217,6 +217,15 @@ namespace trinurbs
     /// |/   4  |/
     ///  -------
     
+    /// Face coord system:
+    
+    /// Given a face index, we define a face coord system (u,v) where the
+    /// origin is defined by the vertex with the lowest index and the
+    /// u-axis is defined from this vertex to the vertex with
+    /// the next lowest index.  This coord system is used to define
+    /// the ordering of local basis function indices when returned
+    /// from functions like localBasisIVec(Face f, BSplineSpace& s)
+    
     /// Parametric coord system same as defined for Vertex numbering above
     enum class Face {
         FACE0 = 0,
@@ -229,6 +238,9 @@ namespace trinurbs
     
     /// Global const for # edges in each cell
     const std::size_t NFACES = 6;
+    
+    /// Cast uint into face enum
+    Face faceType(const uint f);
     
     /// Overload output operator
     std::ostream& operator<<(std::ostream& ost, Edge e);

@@ -50,6 +50,15 @@ namespace trinurbs
                 nurbshelper::getKnotSpan(w, knotVec(W), degree(W))};
     }
     
+    std::tuple<uint, uint, uint> BSplineSpace::localIndices(const uint iel) const
+    {
+        const uint nu = uniqueKnotN(U) - 1;
+        const uint nv = uniqueKnotN(V) - 1;
+        
+        return localElementSpaceIndices(iel, nu, nv);
+    }
+    
+    
     void BSplineSpace::degreeReduce(const ParamDir dir)
     {
         if(0 == mDegrees[dir])
@@ -300,13 +309,225 @@ namespace trinurbs
     }
     
     std::tuple<uint, uint, uint> localElementSpaceIndices(const uint ielem,
-                                                          const uint nu,
-                                                          const uint nv)
+                                                          const uint nel_u,
+                                                          const uint nel_v)
     {
-        const uint nuv = nu * nv;
+        const uint nuv = nel_u * nel_v;
         const uint k = ielem / nuv;
         
-        return std::make_tuple(ielem % nu, (ielem - k * nuv) / nu, k);
+        return std::make_tuple(ielem % nel_u, (ielem - k * nuv) / nel_u, k);
     }
+    
+    uint localBasisI(const Vertex v,
+                     const uint nb_u,
+                     const uint nb_v,
+                     const uint nb_w)
+    {
+        switch(v) {
+            case Vertex::VERTEX0: return 0;
+            case Vertex::VERTEX1: return nb_u - 1;
+            case Vertex::VERTEX2: return nb_u * nb_v * (nb_w - 1);
+            case Vertex::VERTEX3: return nb_u * nb_v * (nb_w - 1) + nb_u - 1;
+            case Vertex::VERTEX4: return nb_u * (nb_v - 1);
+            case Vertex::VERTEX5: return nb_u * nb_v - 1;
+            case Vertex::VERTEX6: return nb_u * nb_v * nb_w - nb_u;
+            case Vertex::VERTEX7: return nb_u * nb_v * nb_w - 1;
+        }
+    }
+    
+    uint localBasisI(const Vertex v,
+                     const BSplineSpace& s)
+    { return localBasisI(v, s.basisFuncN(U),
+                            s.basisFuncN(V),
+                            s.basisFuncN(W)); }
+    
+    UIntVec localBasisIVec(const Edge e,
+                           const uint nb_u,
+                           const uint nb_v,
+                           const uint nb_w)
+    {
+        std::vector<uint> l_vec;
+        
+        switch(e) {
+            case Edge::EDGE0:
+                for(uint i = 0; i < nb_u; ++i)
+                    l_vec.push_back(i);
+                break;
+            case Edge::EDGE1:
+                for(uint i = 0; i < nb_u; ++i)
+                    l_vec.push_back(i + nb_u * nb_v * (nb_w - 1));
+                break;
+            case Edge::EDGE2:
+                for(uint i = 0; i < nb_w; ++i)
+                    l_vec.push_back(i * nb_u * nb_v);
+                break;
+            case Edge::EDGE3:
+                for(uint i = 0; i < nb_w; ++i)
+                    l_vec.push_back(i * nb_u * nb_v + (nb_u - 1));
+                break;
+            case Edge::EDGE4:
+                for(uint i = 0; i < nb_u; ++i)
+                    l_vec.push_back(i + nb_u * (nb_v - 1));
+                break;
+            case Edge::EDGE5:
+                for(uint i = 0; i < nb_u; ++i)
+                    l_vec.push_back(i + nb_u * nb_v * nb_w - nb_u);
+                break;
+            case Edge::EDGE6:
+                for(uint i = 0; i < nb_w; ++i)
+                    l_vec.push_back((i + 1) * nb_u * nb_v - nb_u);
+                break;
+            case Edge::EDGE7:
+                for(uint i = 0; i < nb_w; ++i)
+                    l_vec.push_back((i + 1) * nb_u * nb_v - 1);
+                break;
+            case Edge::EDGE8:
+                for(uint i = 0; i < nb_v; ++i)
+                    l_vec.push_back(i * nb_u);
+                break;
+            case Edge::EDGE9:
+                for(uint i = 0; i < nb_v; ++i)
+                    l_vec.push_back(i * nb_u + (nb_u - 1));
+                break;
+            case Edge::EDGE10:
+                for(uint i = 0; i < nb_v; ++i)
+                    l_vec.push_back(i * nb_u + nb_u * nb_v * (nb_w - 1));
+                break;
+            case Edge::EDGE11:
+                for(uint i = 0; i < nb_v; ++i)
+                    l_vec.push_back(i * nb_u + nb_u * nb_v * (nb_w - 1) + (nb_u - 1));
+                break;
+        }
+        
+        return l_vec;
+    }
+    
+    UIntVec localBasisIVec(const Edge e, const BSplineSpace& s)
+    {
+        return localBasisIVec(e, s.basisFuncN(U),
+                                 s.basisFuncN(V),
+                                 s.basisFuncN(W));
+    }
+    
+    std::pair<uint, uint> localBasisIPair(const Edge e,
+                                          const BSplineSpace& s)
+    {
+        switch (e) {
+            case Edge::EDGE0:
+                return std::make_pair(localBasisI(Vertex::VERTEX0, s),
+                                      localBasisI(Vertex::VERTEX1, s));
+                break;
+            case Edge::EDGE1:
+                return std::make_pair(localBasisI(Vertex::VERTEX2, s),
+                                      localBasisI(Vertex::VERTEX3, s));
+                break;
+            case Edge::EDGE2:
+                return std::make_pair(localBasisI(Vertex::VERTEX0, s),
+                                      localBasisI(Vertex::VERTEX2, s));
+                break;
+            case Edge::EDGE3:
+                return std::make_pair(localBasisI(Vertex::VERTEX1, s),
+                                      localBasisI(Vertex::VERTEX3, s));
+                break;
+            case Edge::EDGE4:
+                return std::make_pair(localBasisI(Vertex::VERTEX4, s),
+                                      localBasisI(Vertex::VERTEX5, s));
+                break;
+            case Edge::EDGE5:
+                return std::make_pair(localBasisI(Vertex::VERTEX6, s),
+                                      localBasisI(Vertex::VERTEX7, s));
+                break;
+            case Edge::EDGE6:
+                return std::make_pair(localBasisI(Vertex::VERTEX4, s),
+                                      localBasisI(Vertex::VERTEX6, s));
+                break;
+            case Edge::EDGE7:
+                return std::make_pair(localBasisI(Vertex::VERTEX5, s),
+                                      localBasisI(Vertex::VERTEX7, s));
+                break;
+            case Edge::EDGE8:
+                return std::make_pair(localBasisI(Vertex::VERTEX0, s),
+                                      localBasisI(Vertex::VERTEX4, s));
+                break;
+            case Edge::EDGE9:
+                return std::make_pair(localBasisI(Vertex::VERTEX1, s),
+                                      localBasisI(Vertex::VERTEX5, s));
+                break;
+            case Edge::EDGE10:
+                return std::make_pair(localBasisI(Vertex::VERTEX2, s),
+                                      localBasisI(Vertex::VERTEX6, s));
+                break;
+            case Edge::EDGE11:
+                return std::make_pair(localBasisI(Vertex::VERTEX3, s),
+                                      localBasisI(Vertex::VERTEX7, s));
+                break;
+        }
+    }
+    
+    UIntVecVec localBasisIVec(const Face f, const BSplineSpace& s)
+    {
+        return localBasisIVec(f, s.basisFuncN(U),
+                                 s.basisFuncN(V),
+                                 s.basisFuncN(W));
+    }
+    
+    /// Return the set of local basis function indices for a given face
+    /// using the coordinate system as defined in the comments in base.h
+    UIntVecVec localBasisIVec(const Face f,
+                              const uint nb_u,
+                              const uint nb_v,
+                              const uint nb_w)
+    {
+        UIntVecVec lvec;
+        switch(f)
+        {
+            case Face::FACE0:
+                // Origin: 0
+                // u axis: 0-1
+                // v axis 0-2
+                for(uint iw = 0; iw < nb_w; ++iw)
+                {
+                    UIntVec temp;
+                    for(uint iu = 0; iu < nb_u; ++iu)
+                        temp.push_back(iu + nb_u * nb_v * iw);
+                    lvec.push_back(temp);
+                }
+                break;
+            case Face::FACE1:
+                // Origin: 4
+                // u axis: 4-5
+                // v axis 4-6
+                for(uint iw = 0; iw < nb_w; ++iw)
+                {
+                    UIntVec temp;
+                    for(uint iu = 0; iu < nb_u; ++iu)
+                        temp.push_back(iu + nb_u * (nb_v - 1) + nb_u * nb_v * iw);
+                    lvec.push_back(temp);
+                }
+                break;
+            case Face::FACE2:
+                // Origin: 0
+                // u axis: 0-2
+                // v axis 0-4
+                for(uint iv = 0; iv < nb_v; ++iv)
+                {
+                    UIntVec temp;
+                    for(uint iw = 0; iw < nb_w; ++iw)
+                        temp.push_back(iw * nb_u * nb_v + iv * nb_u);
+                    lvec.push_back(temp);
+                }
+                break;
+                
+                // TODO!!!!
+            case Face::FACE3:
+                break;
+            case Face::FACE4:
+                break;
+            case Face::FACE5:
+                break;
+                
+        }
+    }
+    
     
 }

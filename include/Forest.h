@@ -354,6 +354,12 @@ namespace trinurbs
             return mCVertexSpaceMap.at(ivert);
         }
         
+        /// Get space indices connected to given face index
+        std::vector<uint> connectedSpacesOnFace(const uint iface) const
+        {
+            return mFaceSpaceMap.at(iface);
+        }
+        
         /// Get space indices that are vertex adjacent (not edge adjcent) to the given space
         /// and vertex
 //        std::vector<uint> vertexConnectedSpaces(const uint ispace,
