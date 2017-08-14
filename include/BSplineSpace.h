@@ -604,6 +604,13 @@ namespace trinurbs
     std::pair<uint, uint> localBasisIPair(const Edge e,
                                           const BSplineSpace& s);
     
+    /// Given a face enum and space, return the set of ordered
+    /// local vertex indices. A positive order is defined by working anti-
+    /// clockwise around the face, starting at the origin as defined
+    /// by the local (u,v) face coord system.
+    std::tuple<uint, uint, uint, uint> localBasisITuple(const Face f,
+                                                        const BSplineSpace& s);
+    
     /// Return the set of local basis function indices for a given face
     /// using the coordinate system as defined in the comments in base.h
     UIntVecVec localBasisIVec(const Face f, const BSplineSpace& s);
@@ -614,6 +621,12 @@ namespace trinurbs
                               const uint nb_u,
                               const uint nb_v,
                               const uint nb_w);
+    
+    /// Reorder the local indices for a given face such that they align
+    /// with the tuple that specifies the global vertex indices for the face
+    void reorderLocalFaceIndices(std::vector<std::vector<uint>>& lindices,
+                                 const Face f,
+                                 const std::tuple<uint, uint, uint, uint>& igvert);
     
     
 }

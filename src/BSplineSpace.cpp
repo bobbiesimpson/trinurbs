@@ -464,6 +464,51 @@ namespace trinurbs
         }
     }
     
+    std::tuple<uint, uint, uint, uint> localBasisITuple(const Face f,
+                                                        const BSplineSpace& s)
+    {
+        switch(f)
+        {
+            case Face::FACE0:
+                return std::make_tuple(localBasisI(Vertex::VERTEX0, s),
+                                       localBasisI(Vertex::VERTEX1, s),
+                                       localBasisI(Vertex::VERTEX3, s),
+                                       localBasisI(Vertex::VERTEX2, s));
+                break;
+            case Face::FACE1:
+                return std::make_tuple(localBasisI(Vertex::VERTEX4, s),
+                                       localBasisI(Vertex::VERTEX5, s),
+                                       localBasisI(Vertex::VERTEX7, s),
+                                       localBasisI(Vertex::VERTEX6, s));
+                break;
+            case Face::FACE2:
+                return std::make_tuple(localBasisI(Vertex::VERTEX0, s),
+                                       localBasisI(Vertex::VERTEX2, s),
+                                       localBasisI(Vertex::VERTEX6, s),
+                                       localBasisI(Vertex::VERTEX4, s));
+                break;
+            case Face::FACE3:
+                return std::make_tuple(localBasisI(Vertex::VERTEX1, s),
+                                       localBasisI(Vertex::VERTEX3, s),
+                                       localBasisI(Vertex::VERTEX7, s),
+                                       localBasisI(Vertex::VERTEX5, s));
+                break;
+            case Face::FACE4:
+                return std::make_tuple(localBasisI(Vertex::VERTEX0, s),
+                                       localBasisI(Vertex::VERTEX1, s),
+                                       localBasisI(Vertex::VERTEX5, s),
+                                       localBasisI(Vertex::VERTEX4, s));
+                break;
+            case Face::FACE5:
+                return std::make_tuple(localBasisI(Vertex::VERTEX2, s),
+                                       localBasisI(Vertex::VERTEX3, s),
+                                       localBasisI(Vertex::VERTEX7, s),
+                                       localBasisI(Vertex::VERTEX6, s));
+                break;
+
+        }
+    }
+    
     UIntVecVec localBasisIVec(const Face f, const BSplineSpace& s)
     {
         return localBasisIVec(f, s.basisFuncN(U),
@@ -517,16 +562,65 @@ namespace trinurbs
                     lvec.push_back(temp);
                 }
                 break;
-                
-                // TODO!!!!
             case Face::FACE3:
+                // Origin: 1
+                // u axis: 1-3
+                // v axis 1-5
+                for(uint iv = 0; iv < nb_v; ++iv)
+                {
+                    UIntVec temp;
+                    for(uint iw = 0; iw < nb_w; ++iw)
+                        temp.push_back(iw * nb_u * nb_v + iv * nb_u + (nb_u - 1));
+                    lvec.push_back(temp);
+                }
                 break;
             case Face::FACE4:
+                // Origin: 0
+                // u axis: 0-1
+                // v axis 0-4
+                for(uint iv = 0; iv < nb_v; ++iv)
+                {
+                    UIntVec temp;
+                    for(uint iu = 0; iu < nb_u; ++iu)
+                        temp.push_back(iv * nb_u + iu);
+                    lvec.push_back(temp);
+                }
                 break;
             case Face::FACE5:
+                // Origin: 2
+                // u axis: 2-3
+                // v axis 2-6
+                for(uint iv = 0; iv < nb_v; ++iv)
+                {
+                    UIntVec temp;
+                    for(uint iu = 0; iu < nb_u; ++iu)
+                        temp.push_back(iv * nb_u + iu + (nb_w - 1) * nb_u * nb_v);
+                    lvec.push_back(temp);
+                }
                 break;
-                
         }
+        return lvec;
+    }
+    
+    void reorderLocalFaceIndices(std::vector<std::vector<uint>>& lindices,
+                                 const Face f,
+                                 const std::tuple<uint, uint, uint, uint>& igvert)
+    {
+        // general algorithm is to first consider the set igvert as cyclic
+        // and to rotate the face until the lowest index is the first index.
+        // The number of rotations required to do this dicates how many
+        // rotations to apply to the lindices matrix
+        
+        // See this page for how transpose/rotate matrix
+        // https://stackoverflow.com/questions/42519/how-do-you-rotate-a-two-dimensional-array
+        
+        // And finally, if required apply a transpose to ensure u-axis
+        // is aligned along the bottom edge
+        
+        
+        
+        
+        
     }
     
     

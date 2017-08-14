@@ -198,7 +198,7 @@ namespace trinurbs
         
         std::map<uint, std::vector<uint>> temp_conn;        // temporary nodal connectivity - will be copied at end
         std::map<uint, std::vector<uint>> edge_map;         // map from global edge index to global node indices
-        std::map<uint, std::vector<uint>> face_map;         // map from global face index to global node indicies
+        std::map<uint, std::vector<std::vector<uint>>> face_map;  // map from global face index to global node indicies
         std::map<uint, uint> vx_map;                        // map from geometry vertex index to new vertex index
         
         uint current_index = 0;                             // the current global node index
@@ -303,6 +303,12 @@ namespace trinurbs
                 // 'flip' the local indices depending on the orientation
                 // of the present face to this global face coord system.
                 
+                // get local indices for this face ordered using the
+                // coord system as detailed in base.h
+                auto local_indices = localBasisIVec(face, s);
+                
+                // now re-order the local indices to match that of the
+                // 'global' indices
                 
                 
                 
