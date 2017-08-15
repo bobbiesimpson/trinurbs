@@ -520,6 +520,9 @@ namespace trinurbs
                 case ParamDir::V:
                     mVExtractionOperators[iel] = op;
                     break;
+                case ParamDir::W:
+                    mWExtractionOperators[iel] = op;
+                    break;
                 default:
                     throw std::runtime_error("Bad parametric direction in Bspline space");
             }
@@ -622,10 +625,23 @@ namespace trinurbs
                               const uint nb_v,
                               const uint nb_w);
     
+    /// Get the basis functions on each of the edges on this face
+    /// Note: basis indices are repeated at vertices
+    UIntVecVec localBasisOnEdgesIVec(const Face f,
+                                     const BSplineSpace& s);
+    
+    /// Get the basis functions on each of the edges on this face
+    /// Note: basis indices are repeated at vertices
+    UIntVecVec localBasisOnEdgesIVec(const Face f,
+                                     const uint nb_u,
+                                     const uint nb_v,
+                                     const uint nb_w);
+    
+    
+    
     /// Reorder the local indices for a given face such that they align
     /// with the tuple that specifies the global vertex indices for the face
     void reorderLocalFaceIndices(std::vector<std::vector<uint>>& lindices,
-                                 const Face f,
                                  const std::tuple<uint, uint, uint, uint>& igvert);
     
     

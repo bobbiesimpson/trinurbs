@@ -87,14 +87,14 @@ namespace trinurbs
 //                            const uint nsample = DEFAULT_NGRID_PTS) const;
 //        
 //        /// Load from a file stream
-//        bool load(std::istream& ist);
-//        
-//        /// Load from python script output in HBS format.
-//        bool loadHBSFile(std::istream& ist);
-//        
-//        /// Print to a file stream
-//        void print(std::ostream& ost) const;
-//        
+        bool load(std::istream& ist);
+
+        /// Load from python script output in HBS format.
+        bool loadHBSFile(std::istream& ist);
+
+        /// Print to a file stream
+        void print(std::ostream& ost) const;
+//
 //        /// set flipped normals flag
 //        void flipNormals(bool b) { mFlipNormals = b; }
 //        
@@ -146,10 +146,10 @@ namespace trinurbs
         bool mFlipNormals;
         
         /// Overload input operator
-//        friend std::istream& operator>>(std::istream& ist, Geometry& g);
-//        
-//        /// Overload outut operator
-//        friend std::ostream& operator<<(std::ostream& ost, const Geometry& g);
+        friend std::istream& operator>>(std::istream& ist, Geometry& g);
+        
+        /// Overload outut operator
+        friend std::ostream& operator<<(std::ostream& ost, const Geometry& g);
     };
 }
 

@@ -298,6 +298,22 @@ namespace trinurbs
         std::pair<uint, uint> globalVertexPairI(const uint ispace, const uint e) const
         { return globalVertexPairI(ispace, edgeType(e)); }
         
+        /// Get the ordered set of global vertex indices for the given space
+        /// index and face
+        std::tuple<uint, uint, uint, uint> globalFaceVertexITuple(const uint ispace,
+                                                                 const Face f) const;
+        
+        /// Get the ordered set of global vertex indices for the given space
+        /// index and face (wrapper).
+        std::tuple<uint, uint, uint, uint> globalFaceVertexITuple(const uint ispace,
+                                                                 const uint f) const
+        {
+            return globalFaceVertexITuple(ispace, faceType(f));
+        }
+        
+
+        
+        
         /// Get the knot interval pairs for this element
         DoublePairVec knotIntervals(const uint ispace,
                                     const uint iel) const

@@ -146,8 +146,10 @@ namespace trinurbs
         mNumBasisVec.clear();
         mUExtractionOperators.clear();
         mVExtractionOperators.clear();
+        mWExtractionOperators.clear();
         
-        for(uint i = 0; i < paramDimN(); ++i) {
+        for(uint i = 0; i < paramDimN(); ++i)
+        {
             mIntervalVec.push_back(boost::icl::construct<Interval>
                                    (mKnotVecs[i].front(), mKnotVecs[i].back(),
                                     boost::icl::interval_bounds::closed()));
@@ -158,7 +160,8 @@ namespace trinurbs
         }
         
         // construct unique knot vectors
-        for(auto kv : mKnotVecs) {
+        for(auto kv : mKnotVecs)
+        {
             auto last = std::unique(kv.begin(), kv.end());
             mUniqueKnotVecs.emplace_back( DoubleVec( kv.begin(), last ) );
         }
@@ -602,8 +605,70 @@ namespace trinurbs
         return lvec;
     }
     
+    UIntVecVec localBasisOnEdgesIVec(const Face f,
+                                     const BSplineSpace& s)
+    {
+        return localBasisOnEdgesIVec(f, s.basisFuncN(U),
+                                        s.basisFuncN(V),
+                                        s.basisFuncN(W));
+    }
+    
+    /// Get the basis functions on each of the edges on this face
+    /// Note: basis indices are repeated at vertices
+    UIntVecVec localBasisOnEdgesIVec(const Face f,
+                                     const uint nb_u,
+                                     const uint nb_v,
+                                     const uint nb_w)
+    {
+        UIntVecVec lvec;
+        
+        switch(f)
+        {
+            case Face::FACE0:
+                lvec.push_back(localBasisIVec(Edge::EDGE0, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE1, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE2, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE3, nb_u, nb_v, nb_w));
+                return lvec;
+                
+            case Face::FACE1:
+                lvec.push_back(localBasisIVec(Edge::EDGE4, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE5, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE6, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE7, nb_u, nb_v, nb_w));
+                return lvec;
+                
+            case Face::FACE2:
+                lvec.push_back(localBasisIVec(Edge::EDGE8, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE10, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE2, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE6, nb_u, nb_v, nb_w));
+                return lvec;
+                
+            case Face::FACE3:
+                lvec.push_back(localBasisIVec(Edge::EDGE9, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE11, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE3, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE7, nb_u, nb_v, nb_w));
+                return lvec;
+                
+            case Face::FACE4:
+                lvec.push_back(localBasisIVec(Edge::EDGE0, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE4, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE8, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE9, nb_u, nb_v, nb_w));
+                return lvec;
+                
+            case Face::FACE5:
+                lvec.push_back(localBasisIVec(Edge::EDGE1, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE5, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE10, nb_u, nb_v, nb_w));
+                lvec.push_back(localBasisIVec(Edge::EDGE11, nb_u, nb_v, nb_w));
+                return lvec;
+        }
+    }
+    
     void reorderLocalFaceIndices(std::vector<std::vector<uint>>& lindices,
-                                 const Face f,
                                  const std::tuple<uint, uint, uint, uint>& igvert)
     {
         // general algorithm is to first consider the set igvert as cyclic
@@ -643,7 +708,7 @@ namespace trinurbs
         // The index defines how many rotations are required
         if(index == 1)
             rotateMatrixEntries(lindices,
-                                RotationAngle::TWOSEVENTYDEGREES,
+                                RotationAngle::NINETYDEGREES,
                                 apply_transpose);
         else if(index == 2)
             rotateMatrixEntries(lindices,
@@ -651,7 +716,7 @@ namespace trinurbs
                                 apply_transpose);
         else if(index == 3)
             rotateMatrixEntries(lindices,
-                                RotationAngle::NINETYDEGREES,
+                                RotationAngle::TWOSEVENTYDEGREES,
                                 apply_transpose);
         else
             if(apply_transpose)

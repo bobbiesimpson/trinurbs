@@ -155,6 +155,16 @@ namespace trinurbs
         }
     }
     
+    std::tuple<uint, uint, uint, uint> Forest::globalFaceVertexITuple(const uint ispace,
+                                                                      const Face f) const
+    {
+        const auto local_ivertices = localBasisITuple(f,space(ispace));
+        return std::make_tuple(globalVertexI(ispace, std::get<0>(local_ivertices)),
+                               globalVertexI(ispace, std::get<1>(local_ivertices)),
+                               globalVertexI(ispace, std::get<2>(local_ivertices)),
+                               globalVertexI(ispace, std::get<3>(local_ivertices)));
+    }
+    
     void Forest::load(std::istream& ist)
     {
         while(true) {
@@ -285,6 +295,10 @@ namespace trinurbs
             }
             
             // Now fill in face nodal indices if previously assigned
+            
+            //
+            // REQUIRES TESTING!!!!!!
+            //
             for(uint iface = 0; iface < NFACES; ++iface)
             {
                 const Face face = faceType(iface);
@@ -297,7 +311,9 @@ namespace trinurbs
                 // index in the set that defines the face.
                 // We can then define a 2D coord system where
                 // the +ve u-axis is defined by the edge from the origin to
-                // the lowest global vertex index (out of the possible 2).
+                // the next lowest global vertex index. The v-axis
+                // is then defined from the origin to the index with the
+                // next least difference.
                 
                 // Given this definition, we need to 'rotate' and/or
                 // 'flip' the local indices depending on the orientation
@@ -305,15 +321,70 @@ namespace trinurbs
                 
                 // get local indices for this face ordered using the
                 // coord system as detailed in base.h
-                auto local_indices = localBasisIVec(face, s);
+                auto ilocal_basis_vec = localBasisIVec(face, s);
+                
+                // get the local indices of the vertices that define this
+                // face (returned as a tuple)
+                auto ilocal_verts = localBasisITuple(face, s);
+                
+                // and fill up the tuple which defines the
+                auto iglobal_verts = std::make_tuple(gnode_vec[std::get<0>(ilocal_verts)],
+                                                     gnode_vec[std::get<1>(ilocal_verts)],
+                                                     gnode_vec[std::get<2>(ilocal_verts)],
+                                                     gnode_vec[std::get<3>(ilocal_verts)]);
                 
                 // now re-order the local indices to match that of the
                 // 'global' indices
+                reorderLocalFaceIndices(ilocal_basis_vec, iglobal_verts);
                 
-                
-                
+                if(find != face_map.end())
+                {
+                    // We reach here if indices have already been assigned to this
+                    // face
+                    const auto iglobal_basis_vec = find->second;
+                    
+                    assert(ilocal_basis_vec.size() == iglobal_basis_vec.size());
+                    assert(ilocal_basis_vec[0].size() == iglobal_basis_vec[0].size());
+                    
+                    for(size_t i = 0; i < ilocal_basis_vec.size(); ++i)
+                    {
+                        for(size_t j = 0; j < ilocal_basis_vec[0].size(); ++j)
+                        {
+                            const auto lindex = ilocal_basis_vec[i][j];
+                            
+                            // if previously assigned, silently carry on
+                            if(gnode_vec[lindex] != -1)
+                                continue;
+                            else
+                                gnode_vec[lindex] = iglobal_basis_vec[i][j];
+                        }
+                    }
+                }
+                else
+                {
+                    // face vertices have not been assigned. Let's do it now.
+                    std::vector<std::vector<uint>> gmatrix;
+                    
+                    for(const auto& local_row : ilocal_basis_vec)
+                    {
+                        gmatrix.push_back(std::vector<uint>());
+                        auto& current = gmatrix.back();
+
+                        for(const auto& i : local_row)
+                        {
+                            if(gnode_vec[i] != -1)
+                                current.push_back(gnode_vec[i]);
+                            else
+                            {
+                                const uint gindex = current_index++;
+                                current.push_back(gindex);
+                                gnode_vec[i] = gindex;
+                            }
+                        }
+                    }
+                    face_map[global_iface] = gmatrix;
+                }
             }
-            
             
             // now fill up unassigned indices
             std::vector<uint> unsigned_gvec;
@@ -332,12 +403,120 @@ namespace trinurbs
     
     void Forest::initEdgeConn()
     {
-    
+        // clear entries before initialising
+        mEdgeConn.clear();
+        mEdgeSpaceMap.clear();
+        mCVertexSpaceMap.clear();
+        
+        std::map<std::vector<uint>, uint> edge_map; // mapping from edge vertices to global edge index
+        std::vector<Edge> e_types{
+            Edge::EDGE0, Edge::EDGE1, Edge::EDGE2, Edge::EDGE3,
+            Edge::EDGE4, Edge::EDGE5, Edge::EDGE6, Edge::EDGE7,
+            Edge::EDGE8, Edge::EDGE9, Edge::EDGE10, Edge::EDGE11
+        };
+        
+        uint edge_count = 0;
+        for(uint ispace = 0; ispace < spaceN(); ++ispace)
+        {
+            std::vector<uint> edge_conn; // edge connectivity for this space
+            std::vector<uint> c_vertices;
+            
+            for(const auto& e : e_types)
+            {
+                auto v_pair = globalVertexPairI(ispace, e);
+                auto e_conn = globalIVec(ispace, localBasisIVec(e, space(ispace)));
+                std::sort(e_conn.begin(), e_conn.end());
+                
+                c_vertices.push_back(v_pair.first);
+                c_vertices.push_back(v_pair.second);
+                
+                if(v_pair.first > v_pair.second) // make sure ordering is +ve
+                    v_pair = std::make_pair(v_pair.second, v_pair.first);
+                
+                auto search = edge_map.find(e_conn);
+                
+                if(search != edge_map.end())
+                    edge_conn.push_back(search->second);
+                else
+                {
+                    edge_map[e_conn] = edge_count;
+                    edge_conn.push_back(edge_count);
+                    ++edge_count;
+                }
+            }
+            std::sort(c_vertices.begin(), c_vertices.end());
+            auto last = std::unique(c_vertices.begin(), c_vertices.end());
+            c_vertices.erase(last, c_vertices.end());
+            for(const auto& c : c_vertices)
+                mCVertexSpaceMap[c].push_back(ispace);
+            for(const auto& e : edge_conn)
+                mEdgeSpaceMap[e].push_back(ispace);
+            mEdgeConn[ispace] = edge_conn;
+        }
     }
     
     void Forest::initFaceConn()
     {
-    
+        // clear appropriate entries
+        mFaceConn.clear();
+        mFaceSpaceMap.clear();
+        
+        // map from basis indices around edge of face to a global face index
+        std::map<std::vector<uint>, uint> face_map;
+        
+        // vector of all the face types
+        std::vector<Face> face_types{
+            Face::FACE0, Face::FACE1, Face::FACE2, Face::FACE3,
+            Face::FACE4, Face::FACE5
+        };
+        
+        uint face_count = 0;
+        for(uint ispace = 0; ispace < spaceN(); ++ispace)
+        {
+            // let's generate a vector of global basis indices
+            // for all edges on this face
+            
+            // face connectivity for this space
+            std::vector<uint> face_conn;
+            
+            // loop over faces
+            for(const auto& f : face_types)
+            {
+                // get vectors of basis indices along all edges of this face
+                auto igbasis_edgevecs = localBasisOnEdgesIVec(f, space(ispace));
+                
+                // now condense in a single vector
+                std::vector<uint> edge_basis;
+                for(const auto& vec : igbasis_edgevecs)
+                    for(const auto& e : vec)
+                        edge_basis.push_back(e);
+                
+                // sort and remove duplicates
+                std::sort(edge_basis.begin(), edge_basis.end());
+                edge_basis.erase(std::unique(edge_basis.begin(), edge_basis.end()), edge_basis.end());
+                
+                auto search = face_map.find(edge_basis);
+                
+                // if the face has been encountered previously, add the space
+                if(search != face_map.end())
+                    face_conn.push_back(search->second);
+                
+                // otherwise we create a new face index
+                else
+                {
+                    face_map[face_conn] = face_count;
+                    face_conn.push_back(face_count);
+                    ++face_count;
+                }
+            }
+            
+            // finally generate the space map of face and add
+            // the face connectivity for this space to the global
+            // member variable
+            for(const auto& f : face_conn)
+                mFaceSpaceMap[f].push_back(ispace);
+            mFaceConn[ispace] = face_conn;
+        }
     }
     
     std::istream& operator>>(std::istream& ist, Forest& f)
