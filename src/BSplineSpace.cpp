@@ -617,9 +617,45 @@ namespace trinurbs
         // And finally, if required apply a transpose to ensure u-axis
         // is aligned along the bottom edge
         
+        std::vector<uint> igvec{  std::get<0>(igvert),
+                                        std::get<1>(igvert),
+                                        std::get<2>(igvert),
+                                        std::get<3>(igvert)};
         
+        // first find the index of the lowest vertex (defines face origin)
+        auto result = std::min_element(std::begin(igvec), std::end(igvec));
+        auto index = std::distance(std::begin(igvec), result);
         
+        // perform cyclic rotation such that index defining origin
+        // is the first element
+        std::rotate(igvec.begin(), igvec.begin() + index, igvec.end());
         
+        const auto diffu = igvec[1] - igvec[0];
+        const auto diffv = igvec[3] - igvec[0];
+        const auto diff_diag = igvec[2] - igvec[0];
+        
+        if(diff_diag < diffu || diff_diag < diffv)
+            error("Bad face numbering");
+        
+        // determine if we need to 'flip' the face along the diagonal
+        const bool apply_transpose = ((igvec[1] - igvec[0]) > (igvec[3] - igvec[0])) ? true : false;
+        
+        // The index defines how many rotations are required
+        if(index == 1)
+            rotateMatrixEntries(lindices,
+                                RotationAngle::TWOSEVENTYDEGREES,
+                                apply_transpose);
+        else if(index == 2)
+            rotateMatrixEntries(lindices,
+                                RotationAngle::ONEEIGHTYDEGREES,
+                                apply_transpose);
+        else if(index == 3)
+            rotateMatrixEntries(lindices,
+                                RotationAngle::NINETYDEGREES,
+                                apply_transpose);
+        else
+            if(apply_transpose)
+                transpose(lindices);
         
     }
     

@@ -266,6 +266,14 @@ namespace trinurbs
         TANGENT
     };
     
+    /// Enum for rotation angles in increments of 90 degrees
+    /// Counter clockwise positive
+    enum class RotationAngle {
+        NINETYDEGREES,
+        ONEEIGHTYDEGREES,
+        TWOSEVENTYDEGREES
+    };
+    
     /// overload output operator for BCType
     std::ostream& operator<<( std::ostream& ost, const BCType& bc );
     
@@ -349,7 +357,77 @@ namespace trinurbs
     /// If a remainder exists, the last term is modified accordingly.
     std::vector<long int> bounds(long int parts, long int mem);
     
+    /// Transpose a matrix (vector of vectors)
+    template <typename T>
+    void transpose(std::vector<std::vector<T>>& m)
+    {
+        auto copy = m;
+        const size_t nrows = m.size();
+        const size_t ncols = m.front().size();
+        
+        m.clear();
+        
+        m.resize(ncols);
+        for(size_t i = 0; i < ncols; ++i)
+            m[i].resize(nrows);
+        
+        for(size_t i = 0; i < ncols; ++i)
+            for(size_t j = 0; j < nrows; ++j)
+                m[i][j] = copy[j][i];
+        
+    }
     
+    template<typename T>
+    void reverseColumns(std::vector<std::vector<T>>& m)
+    {
+        auto copy = m;
+        const size_t nrows = m.size();
+        const size_t ncols = m.front().size();
+        
+        for(size_t j = 0; j < ncols; ++j)
+            for(size_t i = 0; i < nrows; ++i)
+                m[i][j] = copy[nrows-i-1][j];
+    }
+    
+    template<typename T>
+    void reverseRows(std::vector<std::vector<T>>& m)
+    {
+        auto copy = m;
+        const size_t nrows = m.size();
+        const size_t ncols = m.front().size();
+        
+        for(size_t i = 0; i < nrows; ++i)
+            for(size_t j = 0; j < ncols; ++j)
+                m[i][j] = copy[i][ncols-j-1];
+    }
+    
+    /// Given a matrix (vector of vectors), rotation angle
+    /// and (optional) transpose flag, modify the matrix entries
+    /// accordingly.
+    template<typename T>
+    void rotateMatrixEntries(std::vector<std::vector<T>>& m,
+                             const RotationAngle rangle,
+                             const bool transposeapplied = false)
+    {
+        // now apply each of the three angle cases
+        switch(rangle)
+        {
+            case RotationAngle::NINETYDEGREES:
+                transpose(m);
+                reverseColumns(m);
+                break;
+            case RotationAngle::ONEEIGHTYDEGREES:
+                reverseRows(m);
+                reverseColumns(m);
+                break;
+            case RotationAngle::TWOSEVENTYDEGREES:
+                transpose(m);
+                reverseRows(m);
+                break;
+        }
+        if(transposeapplied)
+            transpose(m);
+    }
 }
 
 // code for allowing for tuple types as keys in unordered_maps
