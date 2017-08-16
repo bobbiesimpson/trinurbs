@@ -7,6 +7,7 @@
 #include "Point.h"
 #include "Point4D.h"
 #include "Geometry.h"
+#include "IElemIntegrate.h"
 
 int main(int argc, char* argv[])
 {

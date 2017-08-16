@@ -21,6 +21,8 @@ set(LIB_HEADERS
     ${LIB_INCLUDE_DIR}/Forest.h
     ${LIB_INCLUDE_DIR}/Geometry.h
     ${LIB_INCLUDE_DIR}/GeometryElement.h
+    ${LIB_INCLUDE_DIR}/IBaseIntegrate.h
+    ${LIB_INCLUDE_DIR}/IElemIntegrate.h
     ${LIB_INCLUDE_DIR}/InputDataStructures.h
     ${LIB_INCLUDE_DIR}/NURBSCache.h
     ${LIB_INCLUDE_DIR}/NURBSCommon.h
@@ -36,6 +38,7 @@ set(LIB_SOURCES
     ${LIB_SOURCE_DIR}/Forest.cpp
     ${LIB_SOURCE_DIR}/Geometry.cpp
     ${LIB_SOURCE_DIR}/GeometryElement.cpp
+    ${LIB_SOURCE_DIR}/IElemIntegrate.cpp
     ${LIB_SOURCE_DIR}/NURBSCommon.cpp
     ${LIB_SOURCE_DIR}/Point.cpp
     ${LIB_SOURCE_DIR}/Point3D.cpp

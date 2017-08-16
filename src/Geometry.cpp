@@ -15,6 +15,7 @@
 #include "BSplineSpace.h"
 #include "Forest.h"
 #include "NURBSCommon.h"
+#include "base.h"
 
 //#include "vtkSmartPointer.h"
 //#include "vtkUnstructuredGrid.h"
@@ -26,83 +27,142 @@
 
 namespace trinurbs
 {
-//    UIntVec Geometry::degree(const uint sp) const
-//    {
-//        return primalForest().space(sp).degree();
-//    }
-//    
-//    double Geometry::jacDet(const double s, const double t, const uint sp) const
-//    {
-//        return cross(tangent(s,t,sp,S), tangent(s,t,sp,T)).length();
-//    }
-//    
-//    /// Jacobian
-//    DoubleVecVec Geometry::jacob(const double s, const double t, const uint sp) const
-//    {
-//        return {tangent(s,t,sp,S).asVec(), tangent(s,t,sp,T).asVec()};
-//    }
-//    
-//    /// Normal
-//    Point3D Geometry::normal(const double s, const double t, const uint sp) const
+    UIntVec Geometry::degree(const uint ispace) const
+    {
+        return primalForest().space(ispace).degree();
+    }
+
+    double Geometry::jacDet(const double u,
+                            const double v,
+                            const double w,
+                            const uint ispace) const
+    {
+        const auto j = jacob(u,v,w,ispace);
+        return j[0][0] * (j[1][1] * j[2][2] - j[1][2] * j[2][1])
+        - j[0][1] * (j[1][0] * j[2][2] - j[1][2] * j[2][1])
+        + j[0][2] * (j[1][0] * j[2][1] - j[1][1] * j[2][1]);
+    }
+    
+    /// Jacobian
+    /// [ dx/du dx/dv dx/dw
+    ///   dy/du dy/dv dy/dw
+    ///   dz/du dz/dv dz/dw ]
+    DoubleVecVec Geometry::jacob(const double u,
+                                 const double v,
+                                 const double w,
+                                 const uint ispace) const
+    {
+        // first generate the tranpose of the jacobian
+        // from tangent vectors
+        auto jtemp = DoubleVecVec{
+            tangent(u,v,w,ispace,U).asVec(),
+            tangent(u,v,w,ispace,V).asVec(),
+            tangent(u,v,w,ispace,W).asVec()
+        };
+        
+        // transpose
+        transpose(jtemp);
+        
+        return jtemp;
+    }
+    
+    /// Normal
+//    Point3D Geometry::normal(const double u,
+//                             const double v,
+//                             const double w,
+//                             const uint ispace) const
 //    {
 //        Point3D n = cross(tangent(s,t,sp,S), tangent(s,t,sp,T));
 //        if(normalsFlipped())
 //            n *= -1;
 //        return n / n.length();
 //    }
-//    
-//    /// Tangent
-//    Point3D Geometry::tangent(const double s,
-//                              const double t,
-//                              const uint sp,
-//                              const ParamDir dir) const
-//    {
-//        const ParamDir dir2 = (dir == S) ? T : S;
-//        Point4D temp;
-//        const BSplineSpace& b_space = primalForest().space(sp);
-//        UIntVecVec indices = b_space.localBasisFuncI(s, t);
-//        UIntVec span = b_space.span(s, t);
-//        DoubleVecVec basis = b_space.tensorBasis(s,t,span);
-//        DoubleVecVec ders = b_space.tensorBasisDers(s,t,span);
-//        
-//        std::vector<double> result;
-//        for(uint j = 0; j < basis[T].size(); ++j)
-//            for(uint i = 0; i < ders[S].size(); ++i)
-//                result.push_back(basis[T][j] * ders[S][i]);
-//        //        std::cout << result << "\n";
-//        
-//        Point3D a, ader;
-//        double w = 0.0, wder = 0.0;
-//        for(uint i = 0; i < b_space.degree(S) + 1; ++i ) {
-//            for(uint j = 0; j < b_space.degree(T) + 1; ++j ) {
-//                const std::size_t der_i = (dir == S) ? i : j;
-//                const std::size_t nder_i = (dir == S) ? j : i;
-//                const Point4D& p = point(sp, indices[S][i], indices[T][j]);
-//                a += p.asUnweighted() * basis[S][i] * basis[T][j];
-//                ader += p.asUnweighted() * ders[dir][der_i] * basis[dir2][nder_i];
-//                w += p.getWeight() * basis[S][i] * basis[T][j];
-//                wder += p.getWeight() * ders[dir][der_i] * basis[dir2][nder_i];
-//            }
-//        }
-//        //        std::cout << "w = " << w << "\n\n";
-//        //        std::cout << "wder = " << wder << "\n\n";
-//        
-//        return nurbshelper::getNonRationalDeriv( { a, ader }, { w, wder } );
-//    }
-//    
-//    /// Interpolate the surface
-//    Point3D Geometry::eval(const double s, const double t, const uint sp) const
-//    {
-//        const BSplineSpace& b_space = primalForest().space(sp);
-//        UIntVec indices = b_space.globalBasisFuncI(s,t);
-//        DoubleVec basis = b_space.basis(s,t);
-//        assert(basis.size() == indices.size());
-//        Point4D p;
-//        for(uint i = 0; i < basis.size(); ++i)
-//            p += point(sp,indices[i]) * basis[i];
-//        return p.asCartesian();
-//    }
-//    
+    
+    /// 'Tangent' vector at a given parametric coordinate
+    Point3D Geometry::tangent(const double u,
+                              const double v,
+                              const double w,
+                              const uint ispace,
+                              const ParamDir dir) const
+    {
+        /// The two 'other' parametric directions
+        ParamDir dir2, dir3;
+        
+        switch(dir)
+        {
+            case U:
+                dir2 = V;
+                dir3 = W;
+                break;
+            case V:
+                dir2 = U;
+                dir3 = W;
+                break;
+            case W:
+                dir2 = U;
+                dir3 = V;
+                break;
+            default:
+                error("Bad parametric direction in Geometry::Tangent()");
+        }
+        
+        Point4D temp;
+        
+        // Get basis functions, derivatives, indices and span
+        const BSplineSpace& b_space = primalForest().space(ispace);
+        UIntVecVec indices = b_space.localBasisFuncI(u,v,w);
+        UIntVec span = b_space.span(u,v,w);
+        DoubleVecVec basis = b_space.tensorBasis(u,v,w,span);
+        DoubleVecVec ders = b_space.tensorBasisDers(u,v,w,span);
+        
+        Point3D a, ader;
+        double wt = 0.0, wder = 0.0;
+        
+        // now loop over tensor product structure of space
+        for(uint i = 0; i < b_space.degree(U) + 1; ++i )
+        {
+            for(uint j = 0; j < b_space.degree(V) + 1; ++j )
+            {
+                for(uint k = 0; k < b_space.degree(W) + 1; ++k)
+                {
+                    const uint der_i = (dir == U) ? i : ( (dir == V) ? j : k);
+                    const uint nder2_i = (dir == U) ? j : ( (dir == V) ? i : i);
+                    const uint nder3_i = (dir == U) ? k : ( (dir == V) ? k : j);
+                    
+                    const Point4D& p = point(ispace, indices[U][i], indices[V][j], indices[W][k]);
+                    
+                    a += p.asUnweighted() * basis[U][i] * basis[V][j] * basis[W][k];
+                    wt += p.getWeight() * basis[U][i] * basis[V][j] * basis[W][k];
+                    
+                    ader += p.asUnweighted() * ders[dir][der_i] * basis[dir2][nder2_i] * basis[dir3][nder3_i];
+                    wder += p.getWeight() * ders[dir][der_i] * basis[dir2][nder2_i] * basis[dir3][nder3_i];
+                }
+            }
+        }
+        //        std::cout << "w = " << w << "\n\n";
+        //        std::cout << "wder = " << wder << "\n\n";
+        
+        return nurbshelper::getNonRationalDeriv({ a, ader }, { w, wder });
+    }
+    
+    /// Interpolate the surface
+    Point3D Geometry::eval(const double u,
+                           const double v,
+                           const double w,
+                           const uint ispace) const
+    {
+        const BSplineSpace& b_space = primalForest().space(ispace);
+        UIntVec indices = b_space.globalBasisFuncI(u,v,w);
+        DoubleVec basis = b_space.basis(u,v,w);
+        
+        assert(basis.size() == indices.size());
+        
+        Point4D p;
+        for(uint i = 0; i < basis.size(); ++i)
+            p += point(ispace,indices[i]) * basis[i];
+        return p.asCartesian();
+    }
+//
 //    /// Write to vtu file.
 //    void Geometry::writeVTKOutput(const std::string& file,
 //                                  const uint nsample) const

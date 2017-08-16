@@ -63,25 +63,40 @@ namespace trinurbs
         uint spaceN() const
         { return primalForest().spaceN(); }
         
-//        /// Degrees for each parametric diredtion of this space
-//        UIntVec degree(const uint sp) const;
-//        
-//        /// Jacobian determinant
-//        double jacDet(const double s, const double t, const uint sp) const;
-//        
-//        /// Jacobian
-//        DoubleVecVec jacob(const double s, const double t, const uint sp) const;
-//        
-//        /// Normal
-//        Point3D normal(const double s, const double t, const uint sp) const;
-//        
-//        /// Tangent
-//        Point3D tangent(const double s, const double t, const uint sp,
-//                        const ParamDir dir) const;
-//        
-//        /// Interpolate the surface
-//        Point3D eval(const double s, const double t, const uint sp) const;
-//        
+        /// Degrees for each parametric diredtion of this space
+        UIntVec degree(const uint ispace) const;
+        
+        /// Jacobian determinant
+        double jacDet(const double u,
+                      const double v,
+                      const double w,
+                      const uint ispace) const;
+        
+        /// Jacobian
+        DoubleVecVec jacob(const double u,
+                           const double v,
+                           const double w,
+                           const uint ispace) const;
+        
+        /// Normal
+//        Point3D normal(const double u,
+//                       const double v,
+//                       const double w,
+//                       const uint ispace) const;
+        
+        /// Tangent
+        Point3D tangent(const double u,
+                        const double v,
+                        const double w,
+                        const uint ispace,
+                        const ParamDir dir) const;
+        
+        /// Interpolate the surface
+        Point3D eval(const double u,
+                     const double v,
+                     const double w,
+                     const uint ispace) const;
+//
 //        /// Write to vtu file.
 //        void writeVTKOutput(const std::string& file,
 //                            const uint nsample = DEFAULT_NGRID_PTS) const;

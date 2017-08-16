@@ -74,7 +74,6 @@ namespace trinurbs
         U = 0,
         V,
         W
-        
     };
     
     /// Cast uint to ParamDir type
@@ -135,11 +134,22 @@ namespace trinurbs
     };
     
     /// A simple struct for representing a parametric coordinate
-    typedef struct {
+    struct ParamCoord {
+        
+        /// Default constructor
+        ParamCoord(double ui = 0.0,
+                   double vi = 0.0,
+                   double wi = 0.0)
+        :
+            u(ui),
+            v(vi),
+            w(wi)
+        {}
+        
         double u;
         double v;
         double w;
-    } ParamCoord;
+    };
     
     /// Vertex enumeration
     ///    6 ------7
