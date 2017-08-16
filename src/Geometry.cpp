@@ -38,9 +38,7 @@ namespace trinurbs
                             const uint ispace) const
     {
         const auto j = jacob(u,v,w,ispace);
-        return j[0][0] * (j[1][1] * j[2][2] - j[1][2] * j[2][1])
-        - j[0][1] * (j[1][0] * j[2][2] - j[1][2] * j[2][1])
-        + j[0][2] * (j[1][0] * j[2][1] - j[1][1] * j[2][1]);
+        return det3x3(j);
     }
     
     /// Jacobian
@@ -110,7 +108,7 @@ namespace trinurbs
         
         // Get basis functions, derivatives, indices and span
         const BSplineSpace& b_space = primalForest().space(ispace);
-        UIntVecVec indices = b_space.localBasisFuncI(u,v,w);
+        UIntVecVec indices = b_space.localBasisIVec(u,v,w);
         UIntVec span = b_space.span(u,v,w);
         DoubleVecVec basis = b_space.tensorBasis(u,v,w,span);
         DoubleVecVec ders = b_space.tensorBasisDers(u,v,w,span);
@@ -152,7 +150,7 @@ namespace trinurbs
                            const uint ispace) const
     {
         const BSplineSpace& b_space = primalForest().space(ispace);
-        UIntVec indices = b_space.globalBasisFuncI(u,v,w);
+        UIntVec indices = b_space.globalBasisIVec(u,v,w);
         DoubleVec basis = b_space.basis(u,v,w);
         
         assert(basis.size() == indices.size());

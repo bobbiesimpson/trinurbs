@@ -5,11 +5,11 @@ namespace trinurbs
 {
     
     GeometryElement::GeometryElement(const Geometry& g,
-                                     const uint sp,
+                                     const uint ispace,
                                      const DoublePairVec& knots)
     :
         mGeom(g),
-        mSpaceI(sp),
+        mSpaceI(ispace),
         mMutex(std::make_shared<std::mutex>()),
         mSize(std::make_pair(false, 0.0))
     {

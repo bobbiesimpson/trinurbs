@@ -338,14 +338,14 @@ namespace trinurbs
         
         /// Return the non-zero local basis function indices for this parametric coordinate
         /// Returns a set of vectors corresponding to the indices in each parametric direction
-        UIntVecVec localBasisFuncI(const double u,
+        UIntVecVec localBasisIVec(const double u,
                                    const double v,
                                    const double w) const;
         
         /// Get the non-zero basis function indices using a row major numbering system.
         /// These are global in the sense that we return a single vector of indices rather
         /// than a tensor product format.
-        UIntVec globalBasisFuncI(const double u,
+        UIntVec globalBasisIVec(const double u,
                                  const double v,
                                  const double w) const
         {
@@ -353,7 +353,7 @@ namespace trinurbs
             const uint nb_u = basisFuncN(U);
             const uint nb_v = basisFuncN(V);
             
-            auto localvec = localBasisFuncI(u,v,w);  // vector of basis functions in each direction
+            auto localvec = localBasisIVec(u,v,w);  // vector of basis functions in each direction
             
             for(const auto& w_index : localvec[W])
                 for(const auto& v_index : localvec[V])

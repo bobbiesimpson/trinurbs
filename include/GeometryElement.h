@@ -45,7 +45,8 @@ namespace trinurbs
                              const double zeta) const;
         
         /// Same as above but passing a 2d guass point
-        Point3D eval(const GPt3D& gp) const { return eval(gp.xi, gp.eta, gp.zeta); }
+        Point3D eval(const GPt3D& gp) const
+        { return eval(gp.xi, gp.eta, gp.zeta); }
         
         /// Get the physical coordinate given a vertex in the parent space
         Point3D evalVertex(const Vertex v) const;
@@ -56,24 +57,29 @@ namespace trinurbs
                               const double zeta) const;
         
         /// Same as above but passing a 2d guass point
-        double jacDet(const GPt3D& gp) const {return jacDet(gp.xi, gp.eta, gp.zeta); }
+        double jacDet(const GPt3D& gp) const
+        {return jacDet(gp.xi, gp.eta, gp.zeta); }
         
         /// Get jacobian determinant from parent to physical space
+        /// given precomputed tangent vectors
         virtual double jacDet(const double xi,
                               const double eta,
                               const double zeta,
                               const Point3D& t1,
-                              const Point3D& t2) const
+                              const Point3D& t2,
+                              const Point3D& t3) const
         {
-            return cross(t1,t2).length() * jacDetParam(xi,eta,zeta);
+            
+            return det3x3(DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}}) * jacDetParam(xi,eta,zeta);
         }
         
         /// Get jacobian determinant from parent to physical space
         virtual double jacDet(const GPt3D& gp,
                               const Point3D& t1,
-                              const Point3D& t2) const
+                              const Point3D& t2,
+                              const Point3D& t3) const
         {
-            return cross(t1,t2).length() * jacDetParam(gp.xi, gp.eta, gp.zeta);
+            return det3x3(DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}}) * jacDetParam(gp.xi,gp.eta,gp.zeta);
         }
         
         /// Get jacobian
@@ -86,7 +92,8 @@ namespace trinurbs
                                    const double eta,
                                    const double zeta,
                                    const Point3D& t1,
-                                   const Point3D& t2) const
+                                   const Point3D& t2,
+                                   const Point3D& t3) const
         {
             throw std::runtime_error("Jacob function not implemented.");
         }
@@ -99,7 +106,8 @@ namespace trinurbs
                                       const double eta,
                                       const double zeta,
                                       const Point3D& t1,
-                                      const Point3D& t2) const
+                                      const Point3D& t2,
+                                      const Point3D& t3) const
         {
             throw std::runtime_error("Jacob inverse function not implemented.");
         }
@@ -121,8 +129,10 @@ namespace trinurbs
                                 const double zeta,
                                 const ParamDir d) const;
         
-        /// Same as above but passing a 2d guass point
-        Point3D tangent(const GPt3D& gp, const ParamDir d) const {return tangent(gp.xi, gp.eta, gp.zeta, d); }
+        /// Same as above but passing a 3d guass point
+        Point3D tangent(const GPt3D& gp,
+                        const ParamDir d) const
+        {return tangent(gp.xi, gp.eta, gp.zeta, d); }
         
         /// Get the degree for all parametric directions.
         UIntVec geometryDegree() const;

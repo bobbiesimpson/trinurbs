@@ -42,41 +42,48 @@ namespace trinurbs
         virtual uint basisFuncN() const = 0;
         
         /// Get basis function indices local to this parameter space
-        virtual UIntVec localBasisFuncI() const = 0;
+        virtual UIntVec localBasisIVec() const = 0;
         
         /// Get the global basis function indices. These are global
         /// in the sense they relate to dofs in the forest.
-        virtual UIntVec globalBasisFuncI() const = 0;
+        virtual UIntVec globalBasisIVec() const = 0;
         
         /// Get the signed global basis function index vector. Any degenerate
         /// indices will be signified by -1
-        virtual IntVec signedGlobalBasisFuncI() const
+        virtual IntVec signedGlobalBasisIVec() const
         {
             throw std::runtime_error("signed basis function index generator not implemented yet");
         }
         
         /// Return non-zero basis function set for the given parent
         /// coordinate
-        virtual std::vector<T> basis(const double u, const double v) const = 0;
+        virtual std::vector<T> basis(const double xi,
+                                     const double eta,
+                                     const double zeta) const = 0;
         
         /// Evauate basis with given tangent vectors
-        virtual std::vector<T> basis(const double u,
-                                     const double v,
+        virtual std::vector<T> basis(const double xi,
+                                     const double eta,
+                                     const double zeta,
                                      const Point3D& t1,
-                                     const Point3D& t2) const
+                                     const Point3D& t2,
+                                     const Point3D& t3) const
         {
             throw std::runtime_error("Basis function not implemented.");
         }
         
         /// Return basis without Piola tranform.
         /// Default behaviour is to return the above basis() function
-        virtual std::vector<T> localBasis(const double u, const double v) const
-        { return basis(u,v); }
+        virtual std::vector<T> localBasis(const double xi,
+                                          const double eta,
+                                          const double zeta) const
+        { return basis(xi,eta,zeta); }
         
-        /// Get the local basis derivatives
-        virtual std::vector<T> localBasisDers(const double u,
-                                              const double v,
-                                              const DerivType dtype) const = 0;
+        /// Get the basis derivatives
+        virtual std::vector<T> basisDers(const double xi,
+                                         const double eta,
+                                         const double zeta,
+                                         const DerivType dtype) const = 0;
         
         /// Get the degree for given parametric direction and component
         virtual uint degree(const ParamDir dir, const uint comp = 0) const = 0;
@@ -117,36 +124,24 @@ namespace trinurbs
         { mEdgeEls[e] = el; }
         
         /// Get vertex connected element at specified vertex
-        const AnalysisElement* getVertexConnectedEl(const Vertex v) const
-        {
-            auto it = mVertexEls.find(v);
-            if(it != mVertexEls.end())
-                return it->second;
-            else
-                return nullptr;
-        }
+//        const AnalysisElement* getVertexConnectedEl(const Vertex v) const
+//        {
+//            auto it = mVertexEls.find(v);
+//            if(it != mVertexEls.end())
+//                return it->second;
+//            else
+//                return nullptr;
+//        }
         
         /// Get edge connected element at specified vertex
-        const AnalysisElement* getEdgeConnectedEl(const Edge e) const
-        {
-            auto it = mEdgeEls.find(e);
-            if(it != mEdgeEls.end())
-                return it->second;
-            else
-                return nullptr;
-        }
-        
-        /// Get the number of connected collocation points on this element
-        virtual uint collocPtN() const = 0;
-        
-        /// Get the global connected collocation indices
-        virtual UIntVec globalCollocConn() const = 0;
-        
-        /// Get the global collocation index given a local index
-        virtual uint globalCollocI(const uint icpt) const = 0;
-        
-        /// Get the parent coordinate of a given collocation point index
-        virtual GPt2D collocParentCoord(const uint icpt) const = 0;
+//        const AnalysisElement* getEdgeConnectedEl(const Edge e) const
+//        {
+//            auto it = mEdgeEls.find(e);
+//            if(it != mEdgeEls.end())
+//                return it->second;
+//            else
+//                return nullptr;
+//        }
         
         /// Print function as used by output operator
         virtual void print(std::ostream& ost) const = 0;
@@ -160,10 +155,10 @@ namespace trinurbs
         /// Given a parent coordinate for this element in [-1,1]
         /// transform this to the parent coordinate in the parent element
         /// also in [-1,1]
-        GPt2D transformToParentElParentCoord(const GPt2D& gp) const
+        GPt2D transformToParentElParentCoord(const GPt3D& gp) const
         {
-            ParamCoord c = paramCoord(gp);
-            return parent()->parentCoord(c.s, c.t);
+            ParamCoord c = getParamCoord(gp);
+            return parent()->getParentCoord(c.u, c.v, c.w);
         }
         
         
@@ -171,22 +166,21 @@ namespace trinurbs
         
         /// Constructor which simply calls BaseElement constructor
         AnalysisElement(const Geometry& g,
-                        const uint sp,
+                        const uint ispace,
                         const DoublePairVec& knots)
         :
-        GeometryElement(g, sp, knots),
-        mpParent(nullptr) {}
-        
-        
+            GeometryElement(g, ispace, knots),
+            mpParent(nullptr)
+        {}
         
     private:
         
         /// Reference to elements connected to vertices of this element.
         /// Assumption that no more than one element is connected to each vertex
-        std::map<Vertex, const AnalysisElement*> mVertexEls;
+//        std::map<Vertex, const AnalysisElement*> mVertexEls;
         
         /// Reference to elements connected to edges of this element.
-        std::map<Edge, const AnalysisElement*> mEdgeEls;
+//        std::map<Edge, const AnalysisElement*> mEdgeEls;
         
         /// Reference to geometry space this element lives in
         //const BSplineSpace* mpGeomSpace;
@@ -202,105 +196,105 @@ namespace trinurbs
     /// Are the given elements connected at an edge?
     /// This implementation does not treat a degenerate shared edge
     /// as a valid case
-    template<typename T>
-    bool edgeConnected(const AnalysisElement<T>& e1,
-                       const AnalysisElement<T>& e2,
-                       Edge& edg1,
-                       Edge& edg2)
-    {
-        
-        for(uint edge1 = 0; edge1 < NEDGES; ++edge1) {
-            const auto adj_e1 = e1.getEdgeConnectedEl(edgeType(edge1));
-            if(nullptr == adj_e1) continue;
-            if(adj_e1 == &e2) { // The elements are edge connected
-                for(uint edge2 = 0; edge2 < NEDGES; ++edge2) {
-                    const auto adj_e2 = e2.getEdgeConnectedEl(edgeType(edge2));
-                    if(nullptr == adj_e2) return false; // is this correct?
-                    if(adj_e2 == &e1) {
-                        edg1 = edgeType(edge1); edg2 = edgeType(edge2);
-                        return true;
-                    }
-                }
-                throw std::runtime_error("Bad edge connectivity for edge connected elements.");
-            }
-        }
-        return false;
-    }
+//    template<typename T>
+//    bool edgeConnected(const AnalysisElement<T>& e1,
+//                       const AnalysisElement<T>& e2,
+//                       Edge& edg1,
+//                       Edge& edg2)
+//    {
+//        
+//        for(uint edge1 = 0; edge1 < NEDGES; ++edge1) {
+//            const auto adj_e1 = e1.getEdgeConnectedEl(edgeType(edge1));
+//            if(nullptr == adj_e1) continue;
+//            if(adj_e1 == &e2) { // The elements are edge connected
+//                for(uint edge2 = 0; edge2 < NEDGES; ++edge2) {
+//                    const auto adj_e2 = e2.getEdgeConnectedEl(edgeType(edge2));
+//                    if(nullptr == adj_e2) return false; // is this correct?
+//                    if(adj_e2 == &e1) {
+//                        edg1 = edgeType(edge1); edg2 = edgeType(edge2);
+//                        return true;
+//                    }
+//                }
+//                throw std::runtime_error("Bad edge connectivity for edge connected elements.");
+//            }
+//        }
+//        return false;
+//    }
     
     /// Are the given elements connected at a vertex
-    template<typename T>
-    bool vertexConnected(const AnalysisElement<T>& e1,
-                         const AnalysisElement<T>& e2,
-                         Vertex& vtx1,
-                         Vertex& vtx2)
-    {
-        for(uint v1 = 0; v1 < NVERTICES; ++v1) {
-            const auto adj_e1 = e1.getVertexConnectedEl(vertexType(v1));
-            if(nullptr == adj_e1) continue;
-            if(adj_e1 == &e2) { // the elements are vertex connected
-                for(uint v2 = 0; v2 < NVERTICES; ++v2) {
-                    const auto adj_e2 = e2.getVertexConnectedEl(vertexType(v2));
-                    if(nullptr == adj_e2) continue;
-                    if(adj_e2 == &e1) {
-                        vtx1 = vertexType(v1); vtx2 = vertexType(v2);
-                        return true;
-                    }
-                }
-                throw std::runtime_error("Bad vertex connectivity for vertex connected elements.");
-            }
-        }
-        return false;
-    }
-    
-    template<typename T>
-    bool connectedAtDegeneratePt(const AnalysisElement<T>& e1,
-                                 const AnalysisElement<T>& e2)
-    {
-        const auto e1_pair = e1.degenerateEdge();
-        const auto e2_pair = e2.degenerateEdge();
-        
-        if(!e1_pair.first || !e2_pair.first)
-            return false;
-        const double tol = 1.e-9;
-        
-        Point3D p1;
-        switch(e1_pair.second)
-        {
-            case Edge::EDGE0:
-                p1 = e1.evalVertex(Vertex::VERTEX0);
-                break;
-            case Edge::EDGE1:
-                p1 = e1.evalVertex(Vertex::VERTEX3);
-                break;
-            case Edge::EDGE2:
-                p1 = e1.evalVertex(Vertex::VERTEX2);
-                break;
-            case Edge::EDGE3:
-                p1 = e1.evalVertex(Vertex::VERTEX1);
-                break;
-        }
-        
-        Point3D p2;
-        switch(e2_pair.second)
-        {
-            case Edge::EDGE0:
-                p2 = e2.evalVertex(Vertex::VERTEX0);
-                break;
-            case Edge::EDGE1:
-                p2 = e2.evalVertex(Vertex::VERTEX3);
-                break;
-            case Edge::EDGE2:
-                p2 = e2.evalVertex(Vertex::VERTEX2);
-                break;
-            case Edge::EDGE3:
-                p2 = e2.evalVertex(Vertex::VERTEX1);
-                break;
-        }
-        if(nurbs::dist(p1, p2) < tol)
-            return true;
-        else
-            return false;
-    }
+//    template<typename T>
+//    bool vertexConnected(const AnalysisElement<T>& e1,
+//                         const AnalysisElement<T>& e2,
+//                         Vertex& vtx1,
+//                         Vertex& vtx2)
+//    {
+//        for(uint v1 = 0; v1 < NVERTICES; ++v1) {
+//            const auto adj_e1 = e1.getVertexConnectedEl(vertexType(v1));
+//            if(nullptr == adj_e1) continue;
+//            if(adj_e1 == &e2) { // the elements are vertex connected
+//                for(uint v2 = 0; v2 < NVERTICES; ++v2) {
+//                    const auto adj_e2 = e2.getVertexConnectedEl(vertexType(v2));
+//                    if(nullptr == adj_e2) continue;
+//                    if(adj_e2 == &e1) {
+//                        vtx1 = vertexType(v1); vtx2 = vertexType(v2);
+//                        return true;
+//                    }
+//                }
+//                throw std::runtime_error("Bad vertex connectivity for vertex connected elements.");
+//            }
+//        }
+//        return false;
+//    }
+//    
+//    template<typename T>
+//    bool connectedAtDegeneratePt(const AnalysisElement<T>& e1,
+//                                 const AnalysisElement<T>& e2)
+//    {
+//        const auto e1_pair = e1.degenerateEdge();
+//        const auto e2_pair = e2.degenerateEdge();
+//        
+//        if(!e1_pair.first || !e2_pair.first)
+//            return false;
+//        const double tol = 1.e-9;
+//        
+//        Point3D p1;
+//        switch(e1_pair.second)
+//        {
+//            case Edge::EDGE0:
+//                p1 = e1.evalVertex(Vertex::VERTEX0);
+//                break;
+//            case Edge::EDGE1:
+//                p1 = e1.evalVertex(Vertex::VERTEX3);
+//                break;
+//            case Edge::EDGE2:
+//                p1 = e1.evalVertex(Vertex::VERTEX2);
+//                break;
+//            case Edge::EDGE3:
+//                p1 = e1.evalVertex(Vertex::VERTEX1);
+//                break;
+//        }
+//        
+//        Point3D p2;
+//        switch(e2_pair.second)
+//        {
+//            case Edge::EDGE0:
+//                p2 = e2.evalVertex(Vertex::VERTEX0);
+//                break;
+//            case Edge::EDGE1:
+//                p2 = e2.evalVertex(Vertex::VERTEX3);
+//                break;
+//            case Edge::EDGE2:
+//                p2 = e2.evalVertex(Vertex::VERTEX2);
+//                break;
+//            case Edge::EDGE3:
+//                p2 = e2.evalVertex(Vertex::VERTEX1);
+//                break;
+//        }
+//        if(nurbs::dist(p1, p2) < tol)
+//            return true;
+//        else
+//            return false;
+//    }
     
     /// Typedefs for nodal and vector analysis elements
     typedef AnalysisElement<double> NAnalysisElement;
