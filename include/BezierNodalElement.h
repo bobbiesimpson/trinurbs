@@ -87,10 +87,15 @@ namespace trinurbs
                               const double eta,
                               const double zeta) const override
         {
-            DoubleVecVec jtemp({{t1.asVec()}, {t2.asVec()}, {t3.asVec()}});
+            // Construct Jacobian from tangent vectors
+            DoubleVecVec jtemp {
+                {tangent(xi,eta,zeta,U).asVec()},
+                {tangent(xi,eta,zeta,V).asVec()},
+                {tangent(xi,eta,zeta,W).asVec()}
+            };
             transpose(jtemp);
             
-            return det3x3(jtemp) * jacDetParam(gp.xi,gp.eta,gp.zeta);
+            return det3x3(jtemp) * jacDetParam(xi,eta,zeta);
         }
         
         /// Override jacobian evaluation
@@ -98,7 +103,7 @@ namespace trinurbs
                                    const double eta,
                                    const double zeta) const override
         {
-            DoubleVecVec jacob_param 
+            DoubleVecVec jacob_param;
 
             jacob_param.push_back(tangent(xi,eta,zeta,U).asVec());
             jacob_param.push_back(tangent(xi,eta,zeta,V).asVec());
@@ -131,7 +136,7 @@ namespace trinurbs
         /// Return the global (to the forest) basis function indices
         UIntVec globalBasisIVec() const override
         {
-            return mGlobalBasisVecI;
+            return mGlobalBasisIVec;
         }
         
         /// REturn the basis function values
@@ -142,9 +147,9 @@ namespace trinurbs
             auto indices = space()->localIndices(localElementI());
             
             // Using a reference makes a huge difference to speed
-            const auto& op_u = space()->extractionOperator(indices.first, U);
-            const auto& op_v = space()->extractionOperator(indices.second, V);
-            const auto& op_w = space()->extractionOperator(indices.second, W);
+            const auto& op_u = space()->extractionOperator(std::get<0>(indices), U);
+            const auto& op_v = space()->extractionOperator(std::get<1>(indices), V);
+            const auto& op_w = space()->extractionOperator(std::get<2>(indices), W);
             
             const auto b_u = nurbshelper::bernsteinPolynomial(xi, degree(U));
             const auto b_v = nurbshelper::bernsteinPolynomial(eta, degree(V));
@@ -175,32 +180,43 @@ namespace trinurbs
                         final.push_back(basis_u[i] * basis_v[j] * basis_w[k]);
             return final;
         }
-        
-        /// TODO: finsihed coverting to trivariate up to here
-        /// on 16/8/2017
+
         /// Get the local basis derivatives either in S or T direction
-        DoubleVec localBasisDers(const double xi,
-                                 const double eta,
-                                 const double zeta,
-                                 const DerivType dtype) const override
+        DoubleVec basisDers(const double xi,
+                            const double eta,
+                            const double zeta,
+                            const DerivType dtype) const override
         {
             auto indices = space()->localIndices(localElementI());
             
             // Using a reference makes a huge difference to speed
-            const auto& op_u = space()->extractionOperator(indices.first, S);
-            const auto& op_v = space()->extractionOperator(indices.second, T);
+            const auto& op_u = space()->extractionOperator(std::get<0>(indices), U);
+            const auto& op_v = space()->extractionOperator(std::get<1>(indices), V);
+            const auto& op_w = space()->extractionOperator(std::get<2>(indices), W);
             
             // Get Bertnein basis in each parametric direction taking account
             // of derivatives.
             DoubleVec bu;
             DoubleVec bv;
-            if(DerivType::DS == dtype) {
-                bu = nurbshelper::bernsteinPolynomialDeriv(u, degree(S));
-                bv = nurbshelper::bernsteinPolynomial(v, degree(T));
-            }
-            else {
-                bu = nurbshelper::bernsteinPolynomial(u, degree(S));
-                bv = nurbshelper::bernsteinPolynomialDeriv(v, degree(T));
+            DoubleVec bw;
+            
+            switch(dtype)
+            {
+                case DU:
+                    bu = nurbshelper::bernsteinPolynomialDeriv(xi, degree(U));
+                    bv = nurbshelper::bernsteinPolynomial(eta, degree(V));
+                    bw = nurbshelper::bernsteinPolynomial(zeta, degree(W));
+                    break;
+                case DV:
+                    bu = nurbshelper::bernsteinPolynomial(xi, degree(U));
+                    bv = nurbshelper::bernsteinPolynomialDeriv(eta, degree(V));
+                    bw = nurbshelper::bernsteinPolynomial(zeta, degree(W));
+                    break;
+                case DW:
+                    bu = nurbshelper::bernsteinPolynomial(xi, degree(U));
+                    bv = nurbshelper::bernsteinPolynomial(eta, degree(V));
+                    bw = nurbshelper::bernsteinPolynomialDeriv(zeta, degree(W));
+                    break;
             }
             
             const uint n_u = op_u.size();
@@ -215,15 +231,23 @@ namespace trinurbs
                 for(uint j = 0; j < op_v[0].size(); ++j)
                     basis_v[i] += op_v[i][j] * bv[j];
             
-            std::vector<double> final;
-            const auto param_j = jacobParam(u, v);
-            const double jterm = (DerivType::DS == dtype) ? 1.0/param_j[0][0] : 1.0 / param_j[1][1];
+            const uint n_w = op_w.size();
+            std::vector<double> basis_w(n_w, 0.0);
+            for(uint i = 0; i < n_w; ++i)
+                for(uint j = 0; j < op_w[0].size(); ++j)
+                    basis_w[i] += op_w[i][j] * bw[j];
             
-            for(uint j = 0; j < basis_v.size(); ++j)
-                for(uint i = 0; i < basis_u.size(); ++i)
-                    final.push_back(basis_u[i] * basis_v[j] * jterm);
+            std::vector<double> final;
+            const auto param_j = jacobParam(xi,eta,zeta);
+            
+            const double jterm = (DU == dtype) ? 1.0/param_j[0][0] : ( (DV == dtype) ? 1.0 / param_j[1][1] : 1.0 / param_j[2][2]);
+            
+            for(uint k = 0; k < basis_w.size(); ++k)
+                for(uint j = 0; j < basis_v.size(); ++j)
+                    for(uint i = 0; i < basis_u.size(); ++i)
+                        final.push_back(basis_u[i] * basis_v[j] * basis_w[k] * jterm);
                     
-                    return final;
+            return final;
         }
         
         /// Basis function degrees

@@ -116,12 +116,12 @@ namespace trinurbs
         }
         
         /// Add a vertex connected element
-        void setVertexConnectedEl(const Vertex v, const AnalysisElement* el)
-        { mVertexEls[v] = el; }
+//        void setVertexConnectedEl(const Vertex v, const AnalysisElement* el)
+//        { mVertexEls[v] = el; }
         
         /// Add an edge connected element
-        void setEdgeConnectedEl(const Edge e, const AnalysisElement* el)
-        { mEdgeEls[e] = el; }
+//        void setEdgeConnectedEl(const Edge e, const AnalysisElement* el)
+//        { mEdgeEls[e] = el; }
         
         /// Get vertex connected element at specified vertex
 //        const AnalysisElement* getVertexConnectedEl(const Vertex v) const
@@ -155,7 +155,7 @@ namespace trinurbs
         /// Given a parent coordinate for this element in [-1,1]
         /// transform this to the parent coordinate in the parent element
         /// also in [-1,1]
-        GPt2D transformToParentElParentCoord(const GPt3D& gp) const
+        GPt3D transformToParentElParentCoord(const GPt3D& gp) const
         {
             ParamCoord c = getParamCoord(gp);
             return parent()->getParentCoord(c.u, c.v, c.w);

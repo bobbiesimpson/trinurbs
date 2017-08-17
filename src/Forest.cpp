@@ -1,5 +1,6 @@
 #include "Forest.h"
 #include "Geometry.h"
+#include "BezierNodalElement.h"
 
 namespace trinurbs
 {
@@ -33,8 +34,8 @@ namespace trinurbs
         
 //        for(const auto& e : f.mElems)
 //            mElems.insert(std::make_pair(e.first, e.second->copy()));
-//        for(const auto& e : f.mBezierElems)
-//            mBezierElems.insert(std::make_pair(e.first, e.second->copy()));
+        for(const auto& e : f.mBezierElems)
+            mBezierElems.insert(std::make_pair(e.first, e.second->copy()));
         mGlobalDofN = f.mGlobalDofN;
     }
     
@@ -58,8 +59,8 @@ namespace trinurbs
         /// TODO
 //        for(const auto& e : f.mElems)
 //            mElems.insert(std::make_pair(e.first, e.second->copy()));
-//        for(const auto& e : f.mBezierElems)
-//            mBezierElems.insert(std::make_pair(e.first, e.second->copy()));
+        for(const auto& e : f.mBezierElems)
+            mBezierElems.insert(std::make_pair(e.first, e.second->copy()));
         
         mGlobalDofN = f.mGlobalDofN;
         return *this;
@@ -80,9 +81,57 @@ namespace trinurbs
         
         /// TODO
 //        mElems.clear();
-//        mBezierElems.clear();
+        mBezierElems.clear();
         mGlobalDofN = std::make_pair(false, 0);
     }
+    
+    const NAnalysisElement* Forest::bezierElement(const uint i) const
+    {
+        // First search cache for element and return if found
+        auto e = mBezierElems.find(i);
+        if(e != mBezierElems.end())
+            return e->second.get();
+        
+        // otherwise we need to construct the relevant Bezier element
+        //
+        // First find local index of element (in space)
+        uint start_i = 0;
+        for(uint s = 0; s < spaceN(); ++s) {
+            const uint el_n = space(s).nonzeroKnotSpanN();
+            if((i - start_i) > (el_n - 1)) {
+                start_i += el_n;
+                continue;
+            }
+            const uint local_i = i - start_i;
+            
+            // create the element
+            auto r = mBezierElems.insert(std::make_pair(i, make_unique<BezierNodalElement>(this,
+                                                                                           s,
+                                                                                           local_i)));
+            if(!r.second)
+                error("Failed attempt to create element");
+            
+            // create mapping from global element index to space and local element index
+            auto result = mElemIndexMap.insert(std::make_pair(i, std::make_pair(s, local_i)));
+            if(!result.second)
+                 error("Failure inserting bezier element index mapping.");
+            
+            auto el = mBezierElems[i].get();
+            
+            // finally, create a referece to the parent element in the primal forest
+            
+            // search for parent element
+            for(uint ielem = 0; ielem < geometry()->primalForest().space(s).nonzeroKnotSpanN(); ++ielem) {
+                const auto pel = geometry()->primalForest().bezierElement(s, ielem);
+                if(pel->contains(*el))
+                    el->setParent(pel);
+            }
+            assert(el->parent() != nullptr);
+            return el;
+        }
+        error("Failed to create Bezier element"); return nullptr;
+    }
+    
     
     Sign Forest::globalEdgeDir(const uint ispace, const Edge e) const
     {

@@ -339,15 +339,15 @@ namespace trinurbs
         /// Return the non-zero local basis function indices for this parametric coordinate
         /// Returns a set of vectors corresponding to the indices in each parametric direction
         UIntVecVec localBasisIVec(const double u,
-                                   const double v,
-                                   const double w) const;
+                                  const double v,
+                                  const double w) const;
         
         /// Get the non-zero basis function indices using a row major numbering system.
         /// These are global in the sense that we return a single vector of indices rather
         /// than a tensor product format.
         UIntVec globalBasisIVec(const double u,
-                                 const double v,
-                                 const double w) const
+                                const double v,
+                                const double w) const
         {
             UIntVec gb_vec;
             const uint nb_u = basisFuncN(U);

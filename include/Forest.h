@@ -13,6 +13,7 @@
 
 #include "base.h"
 #include "BSplineSpace.h"
+#include "AnalysisElement.h"
 
 namespace trinurbs
 {
@@ -131,13 +132,13 @@ namespace trinurbs
 //                                        const uint ielem) const
 //        { return element(globalElI(ispace, ielem)); }
 //        
-//        /// Get element at global index
-//        const NAnalysisElement* bezierElement(const uint i) const;
-//        
-//        /// Get an element given a space index and local element index
-//        const NAnalysisElement* bezierElement(const uint ispace,
-//                                              const uint ielem) const
-//        { return bezierElement(globalElI(ispace, ielem)); }
+        /// Get element at global index
+        const NAnalysisElement* bezierElement(const uint i) const;
+        
+        /// Get an element given a space index and local element index
+        const NAnalysisElement* bezierElement(const uint ispace,
+                                              const uint ielem) const
+        { return bezierElement(globalElI(ispace, ielem)); }
         
         /// END TODO
         
@@ -568,7 +569,7 @@ namespace trinurbs
 //        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mElems;
 //        
 //        /// Map from a (space, local element index) pair to a bezier element instance
-//        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mBezierElems;
+        mutable std::map<uint, std::unique_ptr<NAnalysisElement>> mBezierElems;
         
         /// Cached global dof
         mutable std::pair<bool, uint> mGlobalDofN;

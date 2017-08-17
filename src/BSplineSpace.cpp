@@ -31,9 +31,9 @@ namespace trinurbs
                 nurbshelper::getBsplineBasisDers(w, span[W], knotVec(W), degree(W), der).at(der)};
     }
     
-    UIntVecVec BSplineSpace::localBasisFuncI(const double u,
-                                             const double v,
-                                             const double w) const
+    UIntVecVec BSplineSpace::localBasisIVec(const double u,
+                                            const double v,
+                                            const double w) const
     {
         return {nurbshelper::getBasisFnIndices(u, knotVec(U), degree(U)),
                 nurbshelper::getBasisFnIndices(v, knotVec(V), degree(V)),

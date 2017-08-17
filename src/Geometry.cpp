@@ -53,9 +53,9 @@ namespace trinurbs
         // first generate the tranpose of the jacobian
         // from tangent vectors
         auto jtemp = DoubleVecVec{
-            tangent(u,v,w,ispace,U).asVec(),
-            tangent(u,v,w,ispace,V).asVec(),
-            tangent(u,v,w,ispace,W).asVec()
+            {tangent(u,v,w,ispace,U).asVec()},
+            {tangent(u,v,w,ispace,V).asVec()},
+            {tangent(u,v,w,ispace,W).asVec()}
         };
         
         // transpose
@@ -140,7 +140,7 @@ namespace trinurbs
         //        std::cout << "w = " << w << "\n\n";
         //        std::cout << "wder = " << wder << "\n\n";
         
-        return nurbshelper::getNonRationalDeriv({ a, ader }, { w, wder });
+        return nurbshelper::getNonRationalDeriv({ a, ader }, { wt, wder });
     }
     
     /// Interpolate the surface

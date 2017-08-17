@@ -70,7 +70,10 @@ namespace trinurbs
                               const Point3D& t3) const
         {
             
-            return det3x3(DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}}) * jacDetParam(xi,eta,zeta);
+            auto jtemp = DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}};
+            transpose(jtemp);
+            
+            return det3x3(jtemp) * jacDetParam(xi,eta,zeta);
         }
         
         /// Get jacobian determinant from parent to physical space
@@ -79,7 +82,10 @@ namespace trinurbs
                               const Point3D& t2,
                               const Point3D& t3) const
         {
-            return det3x3(DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}}) * jacDetParam(gp.xi,gp.eta,gp.zeta);
+            auto jtemp = DoubleVecVec{{t1.asVec()}, {t2.asVec()}, {t3.asVec()}};
+            transpose(jtemp);
+            
+            return det3x3(jtemp) * jacDetParam(gp.xi,gp.eta,gp.zeta);
         }
         
         /// Get jacobian
@@ -242,7 +248,7 @@ namespace trinurbs
             return {
                 { (upperBound(U) - lowerBound(U)) / 2.0, 0.0, 0.0},
                 { 0.0, (upperBound(V) - lowerBound(V)) / 2.0, 0.0},
-                { 0.0, 0.0, (upperBound(W) - lowerBound(W))}
+                { 0.0, 0.0, (upperBound(W) - lowerBound(W)) / 2.0}
             };
         }
         
