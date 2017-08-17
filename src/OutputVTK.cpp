@@ -38,6 +38,7 @@ namespace trinurbs
                 
                 // get physical coordinate of sample point
                 const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
+                std::cout << phys_coord << "\n";
                 points->InsertPoint(sample_offset + count, phys_coord.data());
                 ++count;
             }
@@ -58,19 +59,20 @@ namespace trinurbs
                         const uint index4 = (iw + 1) * nsample * nsample + iv * nsample + iu;
                         const uint index6 = (iw + 1) * nsample * nsample + (iv + 1) * nsample + iu + 1;
                         
-                        cell->GetPointIds()->SetId(0, index0);
-                        cell->GetPointIds()->SetId(1, index0 + 1);
+                        cell->GetPointIds()->SetId(0, sample_offset + index0);
+                        cell->GetPointIds()->SetId(1, sample_offset +   index0 + 1);
                         cell->GetPointIds()->SetId(2, sample_offset + index2);
                         cell->GetPointIds()->SetId(3, sample_offset + index2 - 1);
                         cell->GetPointIds()->SetId(4, sample_offset + index4);
                         cell->GetPointIds()->SetId(5, sample_offset + index4 + 1 );
                         cell->GetPointIds()->SetId(6, sample_offset + index6);
                         cell->GetPointIds()->SetId(7, sample_offset + index6 - 1);
+                        
                         grid->InsertNextCell(cell->GetCellType(), cell->GetPointIds() );
                     }
                 }
             }
-            sample_offset += nsample * nsample;
+            sample_offset += nsample * nsample * nsample;
         }
         grid->SetPoints(points);
         vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkXMLUnstructuredGridWriter::New();

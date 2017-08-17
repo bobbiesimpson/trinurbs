@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     trinurbs::Forest forest(g);
     forest.hrefine(refine);
     
-    trinurbs::OutputVTK output("trivariate");
+    trinurbs::OutputVTK output("trivariate", 2);
     output.outputGeometry(forest);
     
     std::cout << "forest with " << forest.elemN() << " elements\n";
