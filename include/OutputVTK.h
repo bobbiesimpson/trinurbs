@@ -1,0 +1,80 @@
+#ifndef TRINURBS_OUTPUTVTK_H
+#define TRINURBS_OUTPUTVTK_H
+
+#include <string>
+#include <vector>
+#include <mutex>
+
+#include "base.h"
+
+namespace trinurbs
+{
+    /// Forward declarations
+    class Forest;
+    
+    /// Class responsible for output to VTK format
+    class OutputVTK {
+        
+    public:
+        
+        /// Default constructor
+        OutputVTK() : OutputVTK("unnamed_output") {}
+        
+        /// Construct with filename
+        OutputVTK(const std::string& f,
+                  const uint nsample = DEFAULT_NGRID_PTS)
+        :
+            mFilename(f),
+            mSamplePtN(nsample) {}
+        
+        /// output the geometry of a forest to VTK
+        void outputGeometry(const Forest& f) const;
+        
+        /// Write a complex nodal field to a vtu file
+        void outputNodalField(const Forest& f,
+                              const std::string& fieldname,
+                              const std::vector<double>& soln) const;
+        
+        /// Sample point number setter
+        void setSamplePtN(const uint n)
+        {
+            if(n < 1)
+                error("Must specifiy non-zero sample points for output");
+            mSamplePtN = n;
+        }
+        
+        /// Filename getter
+        const std::string& filename() const
+        {
+            return mFilename;
+        }
+        
+        /// Filename setter
+        void setFilename(const std::string& newfile)
+        {
+            mFilename = newfile;
+        }
+        
+        /// Sample point number getter
+        uint samplePtN() const { return mSamplePtN; }
+        
+    private:
+        
+        /// Filename we write to
+        std::string mFilename;
+        
+        /// Number of sample points
+        uint mSamplePtN;
+        
+        /// Get the mutex
+        std::mutex& mutex() const
+        {
+            return mMutex;
+        }
+        
+        /// Mutex for this class
+        mutable std::mutex mMutex;
+    };
+}
+
+#endif

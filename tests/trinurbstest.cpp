@@ -9,6 +9,13 @@
 #include "Geometry.h"
 #include "IElemIntegrate.h"
 
+#include <Eigen/Sparse>
+#include <Eigen/SVD>
+#include <vector>
+
+typedef Eigen::SparseMatrix<double> SpMat; // declares a column-major sparse matrix type of double
+typedef Eigen::Triplet<double> Triplet;
+
 int main(int argc, char* argv[])
 {
     std::ifstream ifs(argv[1]);

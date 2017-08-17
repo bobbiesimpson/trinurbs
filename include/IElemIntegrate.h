@@ -183,6 +183,7 @@ namespace trinurbs
         /// Current quadrature index
         uint mCurrentI;
     };
+    
 }
 
 

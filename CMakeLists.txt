@@ -10,6 +10,14 @@ include_directories(${Boost_INCLUDE_DIRS})
 add_definitions( "-DHAS_BOOST" )
 endif()
 
+# look for VTK package
+find_package( VTK REQUIRED )
+include_directories( ${VTK_INCLUDE_DIRS} )
+set(THIS_LINK_LIBS ${THIS_LINK_LIBS} ${VTK_LIBRARIES})
+
+# add Eigen library include fileds
+include_directories(SYSTEM ${fast-ibem_SOURCE_DIR}/libs)
+
 set(LIB_INCLUDE_DIR ${trinurbs_SOURCE_DIR}/include)
 include_directories(${LIB_INCLUDE_DIR})
 
@@ -24,8 +32,10 @@ set(LIB_HEADERS
     ${LIB_INCLUDE_DIR}/IBaseIntegrate.h
     ${LIB_INCLUDE_DIR}/IElemIntegrate.h
     ${LIB_INCLUDE_DIR}/InputDataStructures.h
+    ${LIB_INCLUDE_DIR}/IParentSample.h
     ${LIB_INCLUDE_DIR}/NURBSCache.h
     ${LIB_INCLUDE_DIR}/NURBSCommon.h
+    ${LIB_INCLUDE_DIR}/OutputVTK.h
     ${LIB_INCLUDE_DIR}/Point.h
     ${LIB_INCLUDE_DIR}/Point3D.h
     ${LIB_INCLUDE_DIR}/Point4D.h)
@@ -40,6 +50,7 @@ set(LIB_SOURCES
     ${LIB_SOURCE_DIR}/GeometryElement.cpp
     ${LIB_SOURCE_DIR}/IElemIntegrate.cpp
     ${LIB_SOURCE_DIR}/NURBSCommon.cpp
+    ${LIB_SOURCE_DIR}/OutputVTK.cpp
     ${LIB_SOURCE_DIR}/Point.cpp
     ${LIB_SOURCE_DIR}/Point3D.cpp
     ${LIB_SOURCE_DIR}/Point4D.cpp
