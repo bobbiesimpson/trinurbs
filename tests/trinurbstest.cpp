@@ -8,6 +8,8 @@
 #include "Point4D.h"
 #include "Geometry.h"
 #include "IElemIntegrate.h"
+#include "IParentSample.h"
+#include "OutputVTK.h"
 
 #include <Eigen/Sparse>
 #include <Eigen/SVD>
@@ -45,6 +47,9 @@ int main(int argc, char* argv[])
     trinurbs::Forest forest(g);
     forest.hrefine(refine);
     
+    trinurbs::OutputVTK output("trivariate");
+    output.outputGeometry(forest);
+    
     std::cout << "forest with " << forest.elemN() << " elements\n";
     
     double v = 0.0;
@@ -66,12 +71,9 @@ int main(int argc, char* argv[])
             v += jdet * igpt.getWeight();
         }
     }
-    
     std::cout << "volume = " << v << "\n";
     
     
-    
-//    forest.hrefine(1);
     
     return EXIT_SUCCESS;
 }

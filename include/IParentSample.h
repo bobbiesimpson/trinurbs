@@ -1,4 +1,4 @@
-#ifddef TRINURBS_IPARENT_SAMPLE_H
+#ifndef TRINURBS_IPARENT_SAMPLE_H
 #define TRINURBS_IPARENT_SAMPLE_H
 
 #include "base.h"
@@ -7,7 +7,7 @@ namespace trinurbs
 {
     struct ElementBounds
     {
-        Element(double l_u, double u_u,
+        ElementBounds(double l_u, double u_u,
                 double l_v, double u_v,
                 double l_w, double u_w)
         :
@@ -30,12 +30,12 @@ namespace trinurbs
     
     /// An iterator class that iterates over a set of evenly spaced points over
     /// an element (knot span)
-    class ISamplePt
+    class IParentSample
     {
     public:
         
-        explicit ISamplePt(const Element& e,
-                           const uint npts)
+        explicit IParentSample(const ElementBounds& e,
+                               const uint npts)
         :
             mCurrentEl(e),
             mKnotLinePts(npts),
@@ -48,15 +48,15 @@ namespace trinurbs
         }
         
         /// Default constuctors
-        ISamplePt(const uint npts,
-                  const double lu = -1.0,
-                  const double uu = 1.0,
-                  const double lv = -1.0,
-                  const double uv = 1.0,
-                  const double lw = -1.0,
-                  const double uw = 1.0,)
+        IParentSample(const uint npts,
+                      const double lu = -1.0,
+                      const double uu = 1.0,
+                      const double lv = -1.0,
+                      const double uv = 1.0,
+                      const double lw = -1.0,
+                      const double uw = 1.0)
         :
-            ISamplePt(Element(lu,uu,lv,uv,lw,uw), npts)
+            IParentSample(ElementBounds(lu,uu,lv,uv,lw,uw), npts)
         {}
         
         bool isDone() const
@@ -65,40 +65,69 @@ namespace trinurbs
         }
         
         /// prefix increment operator
-        ISamplePt& operator++()
+        IParentSample& operator++()
         {
             ++mCurrentIndex;
             return *this;
         }
         
         /// postfix increment operator
-        ISamplePt operator++( int i )
+        IParentSample operator++( int i )
         {
-            ISamplePt temp( *this );
+            IParentSample temp( *this );
             ++(*this);
             return temp;
         }
         
-        ParamPt getCurrentPt() const
+        ParamCoord getCurrentPt() const
         {
-            const uint nuv = mKnotLinePts * mKnotLinePts;
+            const uint nuv = pointN() * pointN();
             
-            const uint k = mCurrentIndex / nuv;
-            const uint i = mCurrentIndex & mKnotLinePts;
-            const uint j = (mCurrentIndex - k * nuv) / mCurrentIndex;
+            const uint k = currentIndex() / nuv;
+            const uint i = currentIndex() % pointN();
+            const uint j = (currentIndex() - k * nuv) / pointN();
 
             /// TODO: this needs testing 
-            return ParamPt(mCurrentEl.lower_u + mUIncrement * i,
-                           mCurrentEl.lower_v + mVIncrement * j,
-                           mCurrentEl.lower_w + mWIncrement * k);
+            return ParamCoord(element().lower_u + sampleIncrement(U) * i,
+                              element().lower_v + sampleIncrement(V) * j,
+                              element().lower_w + sampleIncrement(W) * k);
         }
+        
+        /// index getter
+        uint currentIndex() const
+        {return mCurrentIndex; }
         
     protected:
         
     private:
         
+        /// number of points getter (same for all directions)
+        uint pointN() const
+        { return mKnotLinePts; }
+        
+        /// element getter
+        const ElementBounds& element() const { return mCurrentEl; }
+        
+        /// sample point incrmeent getter
+        double sampleIncrement(ParamDir dir) const
+        {
+            switch(dir)
+            {
+                case ParamDir::U:
+                    return mUIncrement;
+
+                case ParamDir::V:
+                    return mVIncrement;
+
+                case ParamDir::W:
+                    return mWIncrement;
+                default:
+                    error("Bad parametric direction");
+            }
+        }
+        
         /// The current element we are iterating over
-        const Element mCurrentEl;
+        const ElementBounds mCurrentEl;
         
         /// The number of points along each knot line
         const uint mKnotLinePts;
