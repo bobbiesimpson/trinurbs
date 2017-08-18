@@ -136,7 +136,8 @@ int main(int argc, char* argv[])
     
     std::cout << "solution vector:\n\n" << soln << "\n";
     
-    trinurbs::OutputVTK output("trivariate");
+    const uint ngridpts = 30;
+    trinurbs::OutputVTK output("trivariate", ngridpts);
     output.outputNodalField(forest, "trial-field", soln);
     
     return EXIT_SUCCESS;
