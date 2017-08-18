@@ -31,9 +31,12 @@ namespace trinurbs
         void outputGeometry(const Forest& f) const;
         
         /// Write a complex nodal field to a vtu file
+        /// if nlocaldof > 1 then we assume the soln is ordered
+        /// as e.g. [u^1_x u^1_y u^1_z u^2_x u^2_y ...]
         void outputNodalField(const Forest& f,
                               const std::string& fieldname,
-                              const std::vector<double>& soln) const;
+                              const std::vector<double>& soln,
+                              const uint nlocaldof = 1) const;
         
         /// Sample point number setter
         void setSamplePtN(const uint n)

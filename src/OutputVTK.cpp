@@ -11,6 +11,8 @@
 #include "vtkPointData.h"
 #include "vtkHexahedron.h"
 
+#include <string>
+
 namespace trinurbs
 {
     void OutputVTK::outputGeometry(const Forest& f) const
@@ -38,7 +40,7 @@ namespace trinurbs
                 
                 // get physical coordinate of sample point
                 const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
-                std::cout << phys_coord << "\n";
+//                std::cout << phys_coord << "\n";
                 points->InsertPoint(sample_offset + count, phys_coord.data());
                 ++count;
             }
@@ -85,105 +87,100 @@ namespace trinurbs
     
     void OutputVTK::outputNodalField(const Forest& f,
                                      const std::string& fieldname,
-                                     const std::vector<double>& soln) const
+                                     const std::vector<double>& soln,
+                                     const uint nlocaldof) const
     {
         
         const uint nsample = samplePtN();   // number of sample points in each parametric direction
-        const uint ncell = nsample - 1; // number of cells in each parametric direction
+        const uint ncell = nsample - 1;     // number of cells in each parametric direction
+        
+        // vtk data structures
         vtkSmartPointer<vtkUnstructuredGrid> grid = vtkUnstructuredGrid::New();
         vtkSmartPointer<vtkPoints> points = vtkPoints::New();
         vtkSmartPointer<vtkDoubleArray> solndata = vtkDoubleArray::New();
-        solndata->SetNumberOfComponents(3);
+        
+        solndata->SetNumberOfComponents(nlocaldof);
         solndata->SetName(fieldname.c_str());
-        solndata->SetComponentName(0, "real");
-        solndata->SetComponentName(1, "imag");
-        solndata->SetComponentName(2, "abs");
+        
+        // set comonent names
+        for(uint idof = 0; idof < nlocaldof; ++idof)
+        {
+            const std::string s = "component " + std::to_string(idof);
+            solndata->SetComponentName(idof, s.c_str());
+        }
         
         uint sample_offset = 0;
         
+        // loop over elements
         for(uint i = 0; i < f.elemN(); ++i)
         {
             const auto e = f.bezierElement(i);
-            
             const auto gbasisivec = e->globalBasisIVec();
+            
             uint count = 0;
-//            for(ISamplePt isamplept(nsample); !isamplept.isDone(); ++isamplept) {
-//                const ParamPt samplept = isamplept.getCurrentPt();
-//                const Point3D phys_coord = e->eval(samplept.s, samplept.t);
-//                points->InsertPoint(sample_offset + count, phys_coord.data());
-//                
-//                // temp code
-//                //                const Point3D p(0.0, 1.0, 0.0);
-//                //                const Point3D k(5.0, 0.0, 0.0);
-//                //
-//                //                std::vector<std::complex<double>> result{p[0], p[1], p[2]};
-//                //                const auto wave = std::exp(-std::complex<double>(0.0, dot(k, phys_coord)));
-//                //                for(auto& r : result)
-//                //                    r *= wave;
-//                //
-//                //                const auto& exact_val = result;
-//                //
-//                //                const auto& t1 = e->tangent(samplept.s, samplept.t, nurbs::ParamDir::S);
-//                //                const auto& t2 = e->tangent(samplept.s, samplept.t, nurbs::ParamDir::T);
-//                //                const double jpiola = nurbs::cross(t1, t2).length();
-//                //
-//                //                DoubleVecVec j;
-//                //                j.push_back(t1.asVec());
-//                //                j.push_back(t2.asVec());
-//                //                j.push_back(
-//                //                            {
-//                //                                1.0/jpiola * (j[0][1] * j[1][2] - j[0][2] * j[1][1]),
-//                //                                1.0/jpiola * (j[0][2] * j[1][0] - j[0][0] * j[1][2]),
-//                //                                1.0/jpiola * (j[0][0] * j[1][1] - j[0][1] * j[1][0])
-//                //                            });
-//                //                auto jinv = inv3x3Mat(j);
-//                //                for(auto& row : jinv)
-//                //                    row.erase(row.begin() + 2);
-//                //
-//                //
-//                //                std::vector<std::complex<double>> fexact(2);
-//                //                std::vector<std::complex<double>> f_h(2);
-//                //                for(size_t i = 0; i < 2; ++i)
-//                //                    for(size_t j = 0; j < 3; ++j)
-//                //                        fexact[i] += jpiola * jinv[j][i] * exact_val[j];
-//                //
-//                //                const auto basisvec = e->localBasis(samplept.s, samplept.t);
-//                //
-//                //                std::complex<double> val;
-//                //                for(uint ibasis = 0; ibasis < basisvec.size(); ++ibasis)
-//                //                    val += soln[gbasisivec[ibasis]] * basisvec[ibasis];
-//                
-//                // end temp code
-//                
-//                // now interpolate solution
-//                const auto basisvec = e->basis(samplept.s, samplept.t);
-//                
-//                std::complex<double> val;
-//                for(uint ibasis = 0; ibasis < basisvec.size(); ++ibasis)
-//                    val += soln[gbasisivec[ibasis]] * basisvec[ibasis];
-//                
-//                
-//                solndata->InsertComponent(sample_offset + count, 0, val.real());
-//                solndata->InsertComponent(sample_offset + count, 1, val.imag());
-//                solndata->InsertComponent(sample_offset + count, 2, std::abs(val));
-//                ++count;
-//            }
-            for( uint t = 0; t < ncell; ++t ) {
-                for( uint s = 0; s < ncell; ++s ) {
-                    vtkSmartPointer< vtkCell > cell = vtkQuad::New();
-                    cell->GetPointIds()->SetId(0, sample_offset + t * nsample + s );
-                    cell->GetPointIds()->SetId(1, sample_offset + t * nsample + s + 1 );
-                    cell->GetPointIds()->SetId(2, sample_offset + ( t + 1 ) * nsample + s + 1 );
-                    cell->GetPointIds()->SetId(3, sample_offset + ( t + 1 ) * nsample + s );
-                    grid->InsertNextCell(cell->GetCellType(), cell->GetPointIds() );
+            
+            // loop over sample points
+            for(IParentSample isamplept(nsample); !isamplept.isDone(); ++isamplept)
+            {
+                const auto samplept = isamplept.getCurrentPt();
+                
+                // get physical coordinate of sample point
+                const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
+//                std::cout << phys_coord << "\n";
+                points->InsertPoint(sample_offset + count, phys_coord.data());
+                
+                // now interpolate soluiton
+                const auto basisvec = e->basis(samplept.u,
+                                               samplept.v,
+                                               samplept.w);
+                
+                std::vector<double> val(nlocaldof, 0.0);
+                
+                for(uint ibasis = 0; ibasis < basisvec.size(); ++ibasis)
+                    for(uint idof = 0; idof < nlocaldof; ++idof)
+                        val[idof] += soln[gbasisivec[ibasis] * nlocaldof + idof] * basisvec[ibasis];
+                
+                for(uint idof = 0; idof < nlocaldof; ++idof)
+                    solndata->InsertComponent(sample_offset + count, idof, val[idof]);
+                ++count;
+            }
+            
+            // now loop over cells and construct connectivity
+            for(uint iw = 0; iw < ncell; ++iw)
+            {
+                for(uint iv = 0; iv < ncell; ++iv)
+                {
+                    for(uint iu = 0; iu < ncell; ++iu)
+                    {
+                        // create a hex
+                        vtkSmartPointer<vtkCell> cell = vtkHexahedron::New();
+                        
+                        const uint index0 = iw * nsample * nsample + iv * nsample + iu;
+                        const uint index2 = iw * nsample * nsample + (iv + 1) * nsample + iu + 1;
+                        
+                        const uint index4 = (iw + 1) * nsample * nsample + iv * nsample + iu;
+                        const uint index6 = (iw + 1) * nsample * nsample + (iv + 1) * nsample + iu + 1;
+                        
+                        cell->GetPointIds()->SetId(0, sample_offset + index0);
+                        cell->GetPointIds()->SetId(1, sample_offset +   index0 + 1);
+                        cell->GetPointIds()->SetId(2, sample_offset + index2);
+                        cell->GetPointIds()->SetId(3, sample_offset + index2 - 1);
+                        cell->GetPointIds()->SetId(4, sample_offset + index4);
+                        cell->GetPointIds()->SetId(5, sample_offset + index4 + 1 );
+                        cell->GetPointIds()->SetId(6, sample_offset + index6);
+                        cell->GetPointIds()->SetId(7, sample_offset + index6 - 1);
+                        
+                        grid->InsertNextCell(cell->GetCellType(), cell->GetPointIds() );
+                    }
                 }
             }
-            sample_offset += nsample * nsample;
+            sample_offset += nsample * nsample * nsample;
         }
+
         grid->SetPoints(points);
         grid->GetPointData()->AddArray(solndata);
         vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkXMLUnstructuredGridWriter::New();
-        const std::string fname = filename() + "_complex_soln.vtu";
+        const std::string fname = filename() + "_soln.vtu";
         writer->SetFileName(fname.c_str());
         writer->SetInputData(grid);
         if(!writer->Write())
