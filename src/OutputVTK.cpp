@@ -11,6 +11,7 @@
 #include "vtkQuad.h"
 #include "vtkPointData.h"
 #include "vtkHexahedron.h"
+#include "vtkCellArray.h"
 
 #include <string>
 
@@ -92,10 +93,12 @@ namespace trinurbs
         const uint ncell = nsample - 1;     // number of cells in each parametric direction
         
         // create vtk data structures
-        vtkSmartPointer<vtkUnstructuredGrid> grid = vtkUnstructuredGrid::New();
-        vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+        vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        vtkSmartPointer<vtkCellArray> cellarray = vtkSmartPointer<vtkCellArray>::New();
         
         uint sample_offset = 0;
+        
         
         // loop over element
         for(uint i = 0; i < f.elemN(); ++i)
@@ -107,10 +110,15 @@ namespace trinurbs
             // loop over sample points
             for(IParentSample isamplept(nsample); !isamplept.isDone(); ++isamplept)
             {
-                const auto samplept = isamplept.getCurrentPt();
+                auto samplept = isamplept.getCurrentPt();
+                
+//                samplept.u *= 0.999999;
+//                samplept.v *= 0.999999;
+//                samplept.w *= 0.999999;
                 
                 // get physical coordinate of sample point
                 const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
+                
                 //                std::cout << phys_coord << "\n";
                 points->InsertPoint(sample_offset + count, phys_coord.data());
                 ++count;
@@ -124,7 +132,7 @@ namespace trinurbs
                     for(uint iu = 0; iu < ncell; ++iu)
                     {
                         // create a hex
-                        vtkSmartPointer<vtkCell> cell = vtkHexahedron::New();
+                        vtkSmartPointer<vtkHexahedron> cell = vtkSmartPointer<vtkHexahedron>::New();
                         
                         const uint index0 = iw * nsample * nsample + iv * nsample + iu;
                         const uint index2 = iw * nsample * nsample + (iv + 1) * nsample + iu + 1;
@@ -133,7 +141,7 @@ namespace trinurbs
                         const uint index6 = (iw + 1) * nsample * nsample + (iv + 1) * nsample + iu + 1;
                         
                         cell->GetPointIds()->SetId(0, sample_offset + index0);
-                        cell->GetPointIds()->SetId(1, sample_offset +   index0 + 1);
+                        cell->GetPointIds()->SetId(1, sample_offset + index0 + 1);
                         cell->GetPointIds()->SetId(2, sample_offset + index2);
                         cell->GetPointIds()->SetId(3, sample_offset + index2 - 1);
                         cell->GetPointIds()->SetId(4, sample_offset + index4);
@@ -141,17 +149,22 @@ namespace trinurbs
                         cell->GetPointIds()->SetId(6, sample_offset + index6);
                         cell->GetPointIds()->SetId(7, sample_offset + index6 - 1);
                         
-                        grid->InsertNextCell(cell->GetCellType(), cell->GetPointIds() );
+                        cellarray->InsertNextCell(cell);
                     }
                 }
             }
             sample_offset += nsample * nsample * nsample;
         }
         grid->SetPoints(points);
-        vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkXMLUnstructuredGridWriter::New();
+        grid->SetCells(VTK_HEXAHEDRON, cellarray);
+        
+        vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+        
         const std::string fname = filename() + "_multiscale_geometry.vtu";
+        
         writer->SetFileName(fname.c_str());
         writer->SetInputData(grid);
+        
         if(!writer->Write())
             error( "Cannot write vtk file" );
     }
