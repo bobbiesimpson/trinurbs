@@ -33,6 +33,8 @@ set(LIB_HEADERS
     ${LIB_INCLUDE_DIR}/IElemIntegrate.h
     ${LIB_INCLUDE_DIR}/InputDataStructures.h
     ${LIB_INCLUDE_DIR}/IParentSample.h
+    ${LIB_INCLUDE_DIR}/MultiscaleBezierNodalElement.h
+    ${LIB_INCLUDE_DIR}/MultiscaleForest.h
     ${LIB_INCLUDE_DIR}/NURBSCache.h
     ${LIB_INCLUDE_DIR}/NURBSCommon.h
     ${LIB_INCLUDE_DIR}/OutputVTK.h
@@ -49,6 +51,8 @@ set(LIB_SOURCES
     ${LIB_SOURCE_DIR}/Geometry.cpp
     ${LIB_SOURCE_DIR}/GeometryElement.cpp
     ${LIB_SOURCE_DIR}/IElemIntegrate.cpp
+    ${LIB_SOURCE_DIR}/MultiscaleBezierNodalElement.cpp
+    ${LIB_SOURCE_DIR}/MultiscaleForest.cpp
     ${LIB_SOURCE_DIR}/NURBSCommon.cpp
     ${LIB_SOURCE_DIR}/OutputVTK.cpp
     ${LIB_SOURCE_DIR}/Point.cpp

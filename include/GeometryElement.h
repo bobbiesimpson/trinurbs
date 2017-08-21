@@ -384,35 +384,35 @@ namespace trinurbs
         /// Mutex to protected cached data
         std::shared_ptr<std::mutex> mMutex;
         
-        void insertCachedPoint(const std::tuple<double, double, double>& p, const Point3D& pt) const
-        {
-            std::lock_guard<std::mutex> lock(*mMutex);
-            mPointCache.insert(std::make_pair(p,pt));
-        }
-        
-        void insertCachedJDet(const std::tuple<double, double, double>& p, const double jdet) const
-        {
-            std::lock_guard<std::mutex> lock(*mMutex);
-            mJDetCache.insert(std::make_pair(p,jdet));
-        }
-        
-        void insertCachedJacob(const std::tuple<double, double, double>& p, const DoubleVecVec& jacob) const
-        {
-            std::lock_guard<std::mutex> lock(*mMutex);
-            mJacobCache.insert(std::make_pair(p,jacob));
-        }
+//        void insertCachedPoint(const std::tuple<double, double, double>& p, const Point3D& pt) const
+//        {
+//            std::lock_guard<std::mutex> lock(*mMutex);
+//            mPointCache.insert(std::make_pair(p,pt));
+//        }
+//        
+//        void insertCachedJDet(const std::tuple<double, double, double>& p, const double jdet) const
+//        {
+//            std::lock_guard<std::mutex> lock(*mMutex);
+//            mJDetCache.insert(std::make_pair(p,jdet));
+//        }
+//        
+//        void insertCachedJacob(const std::tuple<double, double, double>& p, const DoubleVecVec& jacob) const
+//        {
+//            std::lock_guard<std::mutex> lock(*mMutex);
+//            mJacobCache.insert(std::make_pair(p,jacob));
+//        }
         
         /// The non-zero knot interval that defines this element
         std::vector<boost::icl::continuous_interval<double>> mKnotIntervals;
         
-        /// Cache evaluation of physical points
-        mutable std::map<std::tuple<double, double, double>, Point3D> mPointCache;
-        
-        /// Cache jacobian determinant
-        mutable std::map<std::tuple<double, double, double>, double> mJDetCache;
-        
-        /// Cache jacobian matrix
-        mutable std::map<std::tuple<double, double, double>, DoubleVecVec> mJacobCache;
+//        /// Cache evaluation of physical points
+//        mutable std::map<std::tuple<double, double, double>, Point3D> mPointCache;
+//        
+//        /// Cache jacobian determinant
+//        mutable std::map<std::tuple<double, double, double>, double> mJDetCache;
+//        
+//        /// Cache jacobian matrix
+//        mutable std::map<std::tuple<double, double, double>, DoubleVecVec> mJacobCache;
         
         /// Size cache
         mutable std::pair<bool, double> mSize;

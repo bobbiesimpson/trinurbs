@@ -126,8 +126,8 @@ namespace trinurbs
 //        /// Translate geometry by given vector
 //        void translate(const nurbs::Point3D& p);
 //        
-//        /// normalise to a unit length in the maximum dimension
-//        void normalise();
+        /// normalise to [-1,1]^3
+        void normaliseToParentInterval();
         
     protected:
         

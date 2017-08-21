@@ -6,11 +6,14 @@
 #include <mutex>
 
 #include "base.h"
+#include "IParentSample.h"
+#include "Point3D.h"
 
 namespace trinurbs
 {
     /// Forward declarations
     class Forest;
+    class MultiscaleForest;
     
     /// Class responsible for output to VTK format
     class OutputVTK {
@@ -28,7 +31,10 @@ namespace trinurbs
             mSamplePtN(nsample) {}
         
         /// output the geometry of a forest to VTK
-        void outputGeometry(const Forest& f) const;
+        void outputForestGeometry(const Forest& f) const;
+        
+        /// output geometry of multiscale forest
+        void outputMultiscaleForestGeometry(const MultiscaleForest& f) const;
         
         /// Write a complex nodal field to a vtu file
         /// if nlocaldof > 1 then we assume the soln is ordered
@@ -78,6 +84,7 @@ namespace trinurbs
         /// Mutex for this class
         mutable std::mutex mMutex;
     };
+    
 }
 
 #endif

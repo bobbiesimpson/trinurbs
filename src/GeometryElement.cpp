@@ -25,12 +25,12 @@ namespace trinurbs
                                    const double eta,
                                    const double zeta) const
     {
-        auto it = mJDetCache.find(std::make_tuple(xi,eta,zeta));
-        if(it != mJDetCache.end())
-            return it->second;
+//        auto it = mJDetCache.find(std::make_tuple(xi,eta,zeta));
+//        if(it != mJDetCache.end())
+//            return it->second;
         ParamCoord c = getParamCoord(xi,eta,zeta);
         const double jdet =  geometry().jacDet(c.u, c.v, c.w, spaceI()) * jacDetParam(xi,eta,zeta);
-        insertCachedJDet(std::make_tuple(xi,eta,zeta), jdet);
+//        insertCachedJDet(std::make_tuple(xi,eta,zeta), jdet);
         return jdet;
     }
     
@@ -38,13 +38,13 @@ namespace trinurbs
                                   const double eta,
                                   const double zeta) const
     {
-        auto it = mPointCache.find(std::make_tuple(xi,eta,zeta));
-        if(it != mPointCache.end())
-            return it->second;
+//        auto it = mPointCache.find(std::make_tuple(xi,eta,zeta));
+//        if(it != mPointCache.end())
+//            return it->second;
         
         ParamCoord c = getParamCoord(xi,eta,zeta);
         const auto pt = geometry().eval(c.u,c.v,c.w, spaceI());
-        insertCachedPoint(std::make_tuple(xi,eta,zeta), pt);
+//        insertCachedPoint(std::make_tuple(xi,eta,zeta), pt);
         return pt;
     }
     
@@ -86,9 +86,9 @@ namespace trinurbs
                                         const double eta,
                                         const double zeta) const
     {
-        auto it = mJacobCache.find(std::make_tuple(xi,eta,zeta));
-        if(it != mJacobCache.end())
-            return it->second;
+//        auto it = mJacobCache.find(std::make_tuple(xi,eta,zeta));
+//        if(it != mJacobCache.end())
+//            return it->second;
         
         ParamCoord c = getParamCoord(xi,eta,zeta);
         
@@ -107,7 +107,7 @@ namespace trinurbs
                 for(uint k = 0; k < 3; ++k)
                     r[i][j] += jacob_param[i][k] * jacob_parent[k][j];
         
-        insertCachedJacob(std::make_tuple(xi,eta,zeta), r);
+//        insertCachedJacob(std::make_tuple(xi,eta,zeta), r);
         return r;
     }
     

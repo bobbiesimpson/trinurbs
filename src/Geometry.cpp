@@ -389,6 +389,40 @@ namespace trinurbs
 //        
 //    }
     
+    void Geometry::normaliseToParentInterval()
+    {
+        const double max = std::numeric_limits<double>::max();
+        const double min = std::numeric_limits<double>::lowest();
+        Point3D minpt(max, max, max);
+        Point3D maxpt(min, min, min);
+        
+        for(unsigned ipoint = 0; ipoint < controlPtN(); ++ipoint)
+        {
+            const auto& cpt = point(ipoint);
+            for(unsigned i = 0; i < 3; ++i)
+            {
+                if(cpt[i] < minpt[i])
+                    minpt[i] = cpt[i];
+                if(cpt[i] > maxpt[i])
+                    maxpt[i] = cpt[i];
+            }
+        }
+        const auto diff = maxpt - minpt;
+        const auto mid_point = 0.5 * (maxpt + minpt);
+        
+        std::vector<double> diffvec = diff.asVec();
+        auto result = std::max_element(diffvec.begin(), diffvec.end());
+        const double scalefactor = 2.0 / (*result);
+        
+        // now loop over all points, apply scale factor and shift to origin
+        for(uint ipoint = 0; ipoint < controlPtN(); ++ipoint) {
+            auto& pt = point(ipoint);
+            pt -= mid_point;
+            for(uint i = 0; i < 3; ++i)
+                pt[i] *= scalefactor;
+        }
+    }
+    
     std::istream& operator>>(std::istream& ist, Geometry& g)
     {
         g.load(ist);
