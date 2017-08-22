@@ -398,7 +398,7 @@ namespace trinurbs
         
         for(unsigned ipoint = 0; ipoint < controlPtN(); ++ipoint)
         {
-            const auto& cpt = point(ipoint);
+            const auto& cpt = point(ipoint).asCartesian();
             for(unsigned i = 0; i < 3; ++i)
             {
                 if(cpt[i] < minpt[i])
@@ -415,11 +415,19 @@ namespace trinurbs
         const double scalefactor = 2.0 / (*result);
         
         // now loop over all points, apply scale factor and shift to origin
-        for(uint ipoint = 0; ipoint < controlPtN(); ++ipoint) {
+        for(uint ipoint = 0; ipoint < controlPtN(); ++ipoint)
+        {
             auto& pt = point(ipoint);
-            pt -= mid_point;
+            const double w = pt.getWeight();
+            auto pt3d_copy = pt.asCartesian();
+            
+            pt3d_copy -= mid_point;
             for(uint i = 0; i < 3; ++i)
-                pt[i] *= scalefactor;
+                pt3d_copy[i] *= scalefactor;
+            pt = Point4D(pt3d_copy[0],
+                         pt3d_copy[1],
+                         pt3d_copy[2],
+                         w);
         }
     }
     

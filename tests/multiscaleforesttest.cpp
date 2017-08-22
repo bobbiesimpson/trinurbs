@@ -68,7 +68,8 @@ int main(int argc, char* argv[])
     std::cout << "Writing output vtk files.....\n";
     const uint ngridpts = 2;
     OutputVTK output("trivariate_ms", ngridpts);
-    //output.outputForestGeometry(multiscaleforest.microForest());
+    //output.outputForestGeometry(multiscaleforest.macroForest());
+    output.outputForestGeometry(multiscaleforest.microForest());
     
     output.outputMultiscaleForestGeometry(multiscaleforest);
     
