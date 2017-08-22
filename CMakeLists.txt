@@ -12,6 +12,7 @@ endif()
 
 # look for VTK package
 find_package( VTK REQUIRED )
+include(${VTK_USE_FILE})
 include_directories( ${VTK_INCLUDE_DIRS} )
 set(THIS_LINK_LIBS ${THIS_LINK_LIBS} ${VTK_LIBRARIES})
 

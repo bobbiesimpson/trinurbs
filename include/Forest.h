@@ -528,7 +528,7 @@ namespace trinurbs
         /// Pointer to the geometry object associated with this forest.
         const Geometry* mGeom;
         
-        /// Vector of rational b-spline patches denoted as 'trees'.
+        /// Vector of rational b-spline patches denoted as 'trees'. 
         std::vector<BSplineSpace> mSpaces;
         
         /// A mapping that identifies valid spaces and returns their index

@@ -12,6 +12,12 @@
 #include "vtkPointData.h"
 #include "vtkHexahedron.h"
 #include "vtkCellArray.h"
+#include "vtkDataSetMapper.h"
+#include "vtkXMLUnstructuredGridReader.h"
+#include "vtkActor.h"
+#include "vtkRenderer.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
 
 #include <string>
 
@@ -112,15 +118,10 @@ namespace trinurbs
             {
                 auto samplept = isamplept.getCurrentPt();
                 
-//                samplept.u *= 0.999999;
-//                samplept.v *= 0.999999;
-//                samplept.w *= 0.999999;
-                
                 // get physical coordinate of sample point
                 const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
-                
-                //                std::cout << phys_coord << "\n";
-                points->InsertPoint(sample_offset + count, phys_coord.data());
+                points->InsertNextPoint(phys_coord[0], phys_coord[1], phys_coord[2]);
+                //points->InsertPoint(sample_offset + count, phys_coord.data());
                 ++count;
             }
             
@@ -167,6 +168,31 @@ namespace trinurbs
         
         if(!writer->Write())
             error( "Cannot write vtk file" );
+        
+        // render to screen to check output valid
+        vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
+        vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+        reader->SetFileName(fname.c_str());
+        reader->Update();
+        
+        vtkSmartPointer<vtkDataSetMapper> mapper =
+        vtkSmartPointer<vtkDataSetMapper>::New();
+        mapper->SetInputConnection(reader->GetOutputPort());
+        
+        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+        actor->SetMapper(mapper);
+        
+        vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+        vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+        renderWindow->AddRenderer(renderer);
+        vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+        renderWindowInteractor->SetRenderWindow(renderWindow);
+        
+        renderer->AddActor(actor);
+        renderer->SetBackground(.3, .6, .3); // Background color green
+        
+        renderWindow->Render();
+        renderWindowInteractor->Start();
     }
     
     void OutputVTK::outputNodalField(const Forest& f,
