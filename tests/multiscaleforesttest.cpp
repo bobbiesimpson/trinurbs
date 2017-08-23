@@ -6,6 +6,7 @@
 #include "base.h"
 #include "OutputVTK.h"
 #include "IElemIntegrate.h"
+#include "PeriodicForest.h"
 
 using namespace trinurbs;
 
@@ -57,6 +58,8 @@ int main(int argc, char* argv[])
         macro_refine = refinementInput(argv[3]);
     if(argc > 4)
         micro_refine = refinementInput(argv[4]);
+    
+    PeriodicForest p_forest(micro_geom);
     
     multiscaleforest.hrefineMacro(macro_refine);
     multiscaleforest.hrefineMicro(micro_refine);
