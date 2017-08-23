@@ -29,6 +29,11 @@ namespace trinurbs {
                      const double eta,
                      const double zeta) const;
         
+        /// get determinant of jacobian
+        double jacDet(const double xi,
+                      const double eta,
+                      const double zeta) const;
+        
         // macro element getter
         const NAnalysisElement* macroBezierElement() const
         { return mpMacroScaleElement; }
@@ -36,6 +41,12 @@ namespace trinurbs {
         /// micro element getter
         const NAnalysisElement* microBezierElement() const
         { return mpMicroScaleElement; }
+        
+        /// Get integratino order of element (micro element)
+        UIntVec integrationOrder(const uint offset = 0) const
+        {
+            return microBezierElement()->integrationOrder(offset);
+        }
         
     protected:
         

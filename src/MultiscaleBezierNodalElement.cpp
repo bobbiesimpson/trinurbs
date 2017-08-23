@@ -14,5 +14,14 @@ namespace trinurbs {
         
     }
     
-    
+    /// get determinant of jacobian
+    double MultiscaleBezierNodalElement::jacDet(const double xi,
+                                                const double eta,
+                                                const double zeta) const
+    {
+        const auto micro_jdet = microBezierElement()->jacDet(xi, eta, zeta);
+        const auto pt = microBezierElement()->eval(xi, eta, zeta);
+        const auto macro_jdet = macroBezierElement()->jacDet(pt[0], pt[1], pt[2]);
+        return micro_jdet * macro_jdet;
+    }
 }

@@ -137,7 +137,8 @@ namespace trinurbs {
         /// Parameterisation of microscale geometry
         Forest mMicroForest;
         
-        /// TODO: connectivity
+        /// Nodal connectivity of elements at micro scale
+        std::map<uint, std::vector<uint>> mMicroNodalConnectivity;
         
         /// map from global element index to (macro, micro) element pairing
         std::map<uint, std::tuple<uint, uint>> mGlobalToLocalPairElMap;

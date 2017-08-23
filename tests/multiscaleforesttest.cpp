@@ -5,6 +5,7 @@
 #include "MultiscaleForest.h"
 #include "base.h"
 #include "OutputVTK.h"
+#include "IElemIntegrate.h"
 
 using namespace trinurbs;
 
@@ -65,14 +66,35 @@ int main(int argc, char* argv[])
               << multiscaleforest.microForest().elemN() << " elements (micro), "
               << multiscaleforest.elemN() << " elements total\n\n";
     
-    std::cout << "Writing output vtk files.....\n";
+    double v = 0.0;
+    
+    for(size_t iel = 0; iel < multiscaleforest.elemN(); ++iel)
+    {
+        const auto el = multiscaleforest.multiscaleBezierElement(iel);
+        for(IElemIntegrate igpt(el->integrationOrder()); !igpt.isDone(); ++igpt)
+        {
+            const auto gpt = igpt.get();
+            v += el->jacDet(gpt.xi, gpt.eta, gpt.zeta) * igpt.getWeight();
+        }
+    }
+    
+    std::cout << "volume of multiscale geometry = " << v << "\n";
+    
     const uint ngridpts = 2;
-    OutputVTK output("trivariate_ms", ngridpts);
-    //output.outputForestGeometry(multiscaleforest.macroForest());
+    OutputVTK output("micro_", ngridpts);
+
+    std::cout << "outputing micro geometry....\n";
     output.outputForestGeometry(multiscaleforest.microForest());
     
+    output.setFilename("macro_");
+    output.outputForestGeometry(multiscaleforest.macroForest());
+    
+    output.setFilename("multiscale_");
+    std::cout << "outputting multiscale geometry....\n";
     output.outputMultiscaleForestGeometry(multiscaleforest);
     
+    
+    std::cout << "done!\n";
     
     return EXIT_SUCCESS;
 }
