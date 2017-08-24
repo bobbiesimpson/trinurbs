@@ -69,19 +69,19 @@ int main(int argc, char* argv[])
               << multiscaleforest.microForest().elemN() << " elements (micro), "
               << multiscaleforest.elemN() << " elements total\n\n";
     
-    double v = 0.0;
+//    double v = 0.0;
     
-    for(size_t iel = 0; iel < multiscaleforest.elemN(); ++iel)
-    {
-        const auto el = multiscaleforest.multiscaleBezierElement(iel);
-        for(IElemIntegrate igpt(el->integrationOrder()); !igpt.isDone(); ++igpt)
-        {
-            const auto gpt = igpt.get();
-            v += el->jacDet(gpt.xi, gpt.eta, gpt.zeta) * igpt.getWeight();
-        }
-    }
-    
-    std::cout << "volume of multiscale geometry = " << v << "\n";
+//    for(size_t iel = 0; iel < multiscaleforest.elemN(); ++iel)
+//    {
+//        const auto el = multiscaleforest.multiscaleBezierElement(iel);
+//        for(IElemIntegrate igpt(el->integrationOrder()); !igpt.isDone(); ++igpt)
+//        {
+//            const auto gpt = igpt.get();
+//            v += el->jacDet(gpt.xi, gpt.eta, gpt.zeta) * igpt.getWeight();
+//        }
+//    }
+//    
+//    std::cout << "volume of multiscale geometry = " << v << "\n";
     
     const uint ngridpts = 2;
     OutputVTK output("micro_", ngridpts);

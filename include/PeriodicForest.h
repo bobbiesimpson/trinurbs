@@ -56,7 +56,12 @@ namespace trinurbs {
         
     protected:
         
+        
     private:
+        
+        
+        /// Initialise data structures (after construction or refinement)
+        void init();
         
         
     };
