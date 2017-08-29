@@ -33,6 +33,7 @@ uint refinementInput(const char* c)
 
 int main(int argc, char* argv[])
 {
+    
     std::ifstream ifs(argv[1]);
     if(!ifs)
         trinurbs::error("Cannot open macro file for reading\n");

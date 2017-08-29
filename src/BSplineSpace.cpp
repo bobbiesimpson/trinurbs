@@ -708,15 +708,15 @@ namespace trinurbs
         // The index defines how many rotations are required
         if(index == 1)
             rotateMatrixEntries(lindices,
-                                RotationAngle::NINETYDEGREES,
+                                FacePermutation::NINETYDEGREES,
                                 apply_transpose);
         else if(index == 2)
             rotateMatrixEntries(lindices,
-                                RotationAngle::ONEEIGHTYDEGREES,
+                                FacePermutation::ONEEIGHTYDEGREES,
                                 apply_transpose);
         else if(index == 3)
             rotateMatrixEntries(lindices,
-                                RotationAngle::TWOSEVENTYDEGREES,
+                                FacePermutation::TWOSEVENTYDEGREES,
                                 apply_transpose);
         else
             if(apply_transpose)

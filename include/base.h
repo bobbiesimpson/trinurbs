@@ -278,7 +278,10 @@ namespace trinurbs
     
     /// Enum for rotation angles in increments of 90 degrees
     /// Counter clockwise positive
-    enum class RotationAngle {
+    enum class FacePermutation {
+        NOPERMUTATION,
+        FLIPU,
+        FLIPV,
         NINETYDEGREES,
         ONEEIGHTYDEGREES,
         TWOSEVENTYDEGREES
@@ -423,21 +426,29 @@ namespace trinurbs
     /// accordingly.
     template<typename T>
     void rotateMatrixEntries(std::vector<std::vector<T>>& m,
-                             const RotationAngle rangle,
+                             const FacePermutation fperm,
                              const bool transposeapplied = false)
     {
         // now apply each of the three angle cases
-        switch(rangle)
+        switch(fperm)
         {
-            case RotationAngle::NINETYDEGREES:
+            case FacePermutation::NOPERMUTATION:
+                break;
+            case FacePermutation::FLIPU:
+                reverseRows(m);
+                break;
+            case FacePermutation::FLIPV:
+                reverseColumns(m);
+                break;
+            case FacePermutation::NINETYDEGREES:
                 transpose(m);
                 reverseColumns(m);
                 break;
-            case RotationAngle::ONEEIGHTYDEGREES:
+            case FacePermutation::ONEEIGHTYDEGREES:
                 reverseRows(m);
                 reverseColumns(m);
                 break;
-            case RotationAngle::TWOSEVENTYDEGREES:
+            case FacePermutation::TWOSEVENTYDEGREES:
                 transpose(m);
                 reverseRows(m);
                 break;

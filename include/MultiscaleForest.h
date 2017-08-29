@@ -3,6 +3,7 @@
 
 #include "base.h"
 #include "Forest.h"
+#include "PeriodicForest.h"
 #include "Geometry.h"
 #include "MultiscaleBezierNodalElement.h"
 
@@ -30,9 +31,7 @@ namespace trinurbs {
             mMacroForest(macrogeom),
             mMicroForest(microgeom)
         {
-            microgeom.normaliseToParentInterval();
             init();
-            
         }
         
         // hrefine macro forest
@@ -135,7 +134,7 @@ namespace trinurbs {
         Forest mMacroForest;
         
         /// Parameterisation of microscale geometry
-        Forest mMicroForest;
+        PeriodicForest mMicroForest;
         
         /// Nodal connectivity of elements at micro scale
         std::map<uint, std::vector<uint>> mMicroNodalConnectivity;

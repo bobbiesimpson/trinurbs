@@ -7,6 +7,8 @@
 #include <map>
 #include <stdexcept>
 
+#include <boost/math/special_functions.hpp>
+
 #include "GeometryElement.h"
 #include "base.h"
 
@@ -47,6 +49,15 @@ namespace trinurbs
         /// Get the global basis function indices. These are global
         /// in the sense they relate to dofs in the forest.
         virtual UIntVec globalBasisIVec() const = 0;
+        
+        /// Get the global basis function indices for the given face.
+        virtual UIntVec globalBasisIVec(const Face f) const = 0;
+        
+        /// Get the global basis function indices for the given edge.
+        virtual UIntVec globalBasisIVec(const Edge e) const = 0;
+        
+        /// Get the global basis function indices for the given vertex.
+        virtual UIntVec globalBasisI(const Vertex v) const = 0;
         
         /// Get the signed global basis function index vector. Any degenerate
         /// indices will be signified by -1
@@ -159,6 +170,85 @@ namespace trinurbs
         {
             ParamCoord c = getParamCoord(gp);
             return parent()->getParentCoord(c.u, c.v, c.w);
+        }
+        
+        /// Does the given face on this analysis element lie on the parent
+        /// (geometry) face?
+        bool liesOnParentElFace(const Face f) const
+        {
+            assert(parent());
+            
+            switch(f) {
+                case Face::FACE0:
+                    return logically_equal(lowerBound(ParamDir::V), parent()->lowerBound(ParamDir::V));
+                case Face::FACE1:
+                    return logically_equal(upperBound(ParamDir::V), parent()->upperBound(ParamDir::V));
+                case Face::FACE2:
+                    return logically_equal(lowerBound(ParamDir::U), parent()->lowerBound(ParamDir::U));
+                case Face::FACE3:
+                    return logically_equal(upperBound(ParamDir::U), parent()->upperBound(ParamDir::U));
+                case Face::FACE4:
+                    return logically_equal(lowerBound(ParamDir::W), parent()->lowerBound(ParamDir::W));
+                case Face::FACE5:
+                    return logically_equal(upperBound(ParamDir::W), parent()->upperBound(ParamDir::W));
+            }
+        }
+        
+        /// Does this element lie on the given parent edge?
+        bool liesOnParentElEdge(const Edge e) const
+        {
+            switch(e)
+            {
+                case Edge::EDGE0:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE4);
+                case Edge::EDGE1:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE5);
+                case Edge::EDGE2:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE2);
+                case Edge::EDGE3:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE3);
+                case Edge::EDGE4:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE4);
+                case Edge::EDGE5:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE5);
+                case Edge::EDGE6:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE2);
+                case Edge::EDGE7:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE3);
+                case Edge::EDGE8:
+                    return liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE4);
+                case Edge::EDGE9:
+                    return liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE4);
+                case Edge::EDGE10:
+                    return liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE5);
+                case Edge::EDGE11:
+                    return liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE5);
+            }
+        }
+        
+        /// Does this element lie on the given parent vertex?
+        bool liesOnParentElVertex(const Vertex v) const
+        {
+            switch(v)
+            {
+                case Vertex::VERTEX0:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE4);
+                case Vertex::VERTEX1:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE4);
+                case Vertex::VERTEX2:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE5);
+                case Vertex::VERTEX3:
+                    return liesOnParentElFace(Face::FACE0) && liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE5);
+                case Vertex::VERTEX4:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE4);
+                case Vertex::VERTEX5:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE4);
+                case Vertex::VERTEX6:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE2) && liesOnParentElFace(Face::FACE5);
+                case Vertex::VERTEX7:
+                    return liesOnParentElFace(Face::FACE1) && liesOnParentElFace(Face::FACE3) && liesOnParentElFace(Face::FACE5);
+                    
+            }
         }
         
         
