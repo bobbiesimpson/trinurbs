@@ -36,6 +36,7 @@ namespace trinurbs {
         {
             g.normaliseToParentInterval();
             initGeometry();
+            initAnalysisData();
         }
         
         /// Use default destructor
@@ -62,16 +63,35 @@ namespace trinurbs {
         /// Move assignment operator. As before, move all the data across.
         PeriodicForest& operator=(PeriodicForest&& f) = default;
         
+        /// Override hrefinement
+        virtual void hrefine(const uint n) override
+        {
+            Forest::hrefine(n);
+            initAnalysisData();
+        }
+        
     protected:
         
     private:
         
         /// Typedef of map which maps a macro face permutations to a vector of
         /// local elements (with local face indices and face permutations)
-        typedef std::map<FacePermutation, std::vector<std::tuple<uint, Face, FacePermutation>>> FacePermutationMap;
+        typedef std::map<FacePermutation, std::vector<std::tuple<const NAnalysisElement*, Face, FacePermutation>>> FacePermutationMap;
+        
+        typedef std::vector<std::pair<const NAnalysisElement*, Face>> ElemFacePairVec;
         
         /// Initialise data structures (after construction or refinement)
         void initGeometry();
+        
+        /// Initialise analysis data structures (called after refinement).
+        void initAnalysisData();
+        
+        /// Get vector of geometry elements and face for given cell face
+        const ElemFacePairVec& geomElFacePairVec(const uint cellface) const
+        {
+            assert(cellface < NFACES);
+            return mFaceGeomEls[cellface];
+        }
         
         /// Vector of maps of elements that lie on each macro face with
         /// associcated permutations.  The size of this vector must equal 6.
@@ -80,7 +100,7 @@ namespace trinurbs {
         /// Vectors of (geometry element, local face) pairs for each
         /// face of the periodic cell.  These are elements that intersect
         /// the periodic cell domain and are independent of refinement.
-        std::vector<std::vector<std::pair<const NAnalysisElement*, Face>>> mFaceGeomEls;
+        std::vector<ElemFacePairVec> mFaceGeomEls;
         
         
     };

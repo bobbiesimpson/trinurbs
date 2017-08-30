@@ -139,6 +139,31 @@ namespace trinurbs
             return mGlobalBasisIVec;
         }
         
+        /// Get the global basis function indices for the given face.
+        UIntVec globalBasisIVec(const Face f) const override
+        {
+            const UIntVecVec local_ibasis = ::trinurbs::localBasisIVec(f, degree(U) + 1, degree(V) + 1, degree(W) + 1);
+            
+            UIntVec rvec;
+            for(const auto& row : local_ibasis)
+                for(const auto& ilocal : row)
+                    rvec.push_back(globalBasisI(ilocal));
+            
+            return rvec;
+        }
+        
+        /// Get the global basis function indices for the given edge.
+        virtual UIntVec globalBasisIVec(const Edge e) const override
+        {
+            const UIntVec local_ibasis = ::trinurbs::localBasisIVec(e, degree(U) + 1, degree(V) + 1, degree(W) + 1);
+            
+            UIntVec rvec;
+            for(const auto& ilocal : local_ibasis)
+                rvec.push_back(globalBasisI(ilocal));
+                    
+            return rvec;
+        }
+        
         /// REturn the basis function values
         DoubleVec basis(const double xi,
                         const double eta,
@@ -281,6 +306,12 @@ namespace trinurbs
     protected:
         
     private:
+        
+        /// Get global basis index given local index
+        uint globalBasisI(const uint ilocal) const
+        {
+            return mGlobalBasisIVec.at(ilocal);
+        }
         
         /// Reference to forest
         const Forest* mForest;

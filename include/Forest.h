@@ -413,7 +413,7 @@ namespace trinurbs
 //        }
         
         /// Apply uniform hrefinement with n levels of refinement
-        void hrefine(const uint n)
+        virtual void hrefine(const uint n)
         {
             if(0 == n)
                 return;

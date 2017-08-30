@@ -56,9 +56,6 @@ namespace trinurbs
         /// Get the global basis function indices for the given edge.
         virtual UIntVec globalBasisIVec(const Edge e) const = 0;
         
-        /// Get the global basis function indices for the given vertex.
-        virtual UIntVec globalBasisI(const Vertex v) const = 0;
-        
         /// Get the signed global basis function index vector. Any degenerate
         /// indices will be signified by -1
         virtual IntVec signedGlobalBasisIVec() const

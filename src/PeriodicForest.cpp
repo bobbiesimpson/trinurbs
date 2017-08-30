@@ -27,9 +27,7 @@ namespace trinurbs
         
         // first rescale geometry to biunit interval [-1,1]^3
         
-        // set up maps which hold vectors of elements
-        mFaceElMaps.clear();
-        mFaceElMaps.resize(NFACES);
+
         
         mFaceGeomEls.clear();
         mFaceGeomEls.resize(NFACES);
@@ -38,10 +36,6 @@ namespace trinurbs
         // face
         const Geometry* geom = geometry();
         const Forest& primal = geom->primalForest();
-        
-        std::vector<Interval> cell_intervals;
-        for(uint i = 0; i < 3; ++i)
-            cell_intervals.push_back(boost::icl::construct<boost::icl::continuous_interval<double>>(-1.0,1.0));
 
         // Determine set of geometry elements and local (geometry element) faces
         // that lie on each face of the periodic domain. These elements (and any
@@ -51,7 +45,6 @@ namespace trinurbs
         for(uint iel = 0; iel < primal.elemN(); ++iel)
         {
             const auto geom_el = primal.bezierElement(iel);  // geometry element
-            const auto gconn = geom_el->globalBasisIVec();
             
             // if all cpts of geometry element lie in plane of face
             // then element intersects this macro cell face
@@ -60,22 +53,66 @@ namespace trinurbs
             for(uint iface = 0; iface < NFACES; ++iface)
             {
                 const Face face = faceType(iface);
+                const auto fconn = geom_el->globalBasisIVec(face);
+                
                 std::vector<Point3D> cpts;
                 
-                for(const auto& ipt : gconn)
+                for(const auto& ipt : fconn)
                     cpts.push_back(geom->controlPt(ipt).asCartesian());
                 
                 if(allCPtsLieOnPeriodicCellFace(cpts, face))
                     mFaceGeomEls[iface].push_back(std::make_pair(geom_el,face));
             }
-            
-            
         }
+        
+    }
+    
+    void PeriodicForest::initAnalysisData()
+    {
+        // set up maps which hold vectors of elements
+        mFaceElMaps.clear();
+        mFaceElMaps.resize(NFACES);
         
         // Construct vector of 'child' elements for each geometry element
         // that lies on a face/edge/vertex of the cell
         
+        // map from geometry element to child analysis elements
+        // could be optimised to reduce to set of geometry elements
+        // that only lie on faces/edges/vertices of cell geometry.
+        std::map<const NAnalysisElement*, std::vector<const NAnalysisElement*>> geom2child_map;
         
+        // loop over (refined) analysis elements and populate child map
+        for(uint iel = 0; iel < elemN(); ++iel)
+        {
+            auto el = bezierElement(iel);
+            geom2child_map[el->parent()].push_back(el);
+        }
+        
+        // loop over cell (macro) geometry faces
+        for(uint imacroface = 0; imacroface < NFACES; ++imacroface)
+        {
+            // get vector of geometry/face pairs for this face
+            const auto& geomface_vec = geomElFacePairVec(imacroface);
+            
+            // loop over geoemtry face pairs
+            for(const auto& gfacepair : geomface_vec)
+            {
+                const auto& g_pel = gfacepair.first; // pointer to geometry el
+                const auto& face = gfacepair.second; // local face of geom el
+                
+                // loop over children of this geometry element
+                for(const auto& pel : geom2child_map[g_pel])
+                {
+                    // temp code just to check map
+                    if(pel->liesOnParentElFace(face))
+                        mFaceElMaps[imacroface][FacePermutation::NOPERMUTATION].push_back(std::make_tuple(pel,face,FacePermutation::NOPERMUTATION));
+                }
+                
+            }
+        }
+        
+        
+        std::cout << "Finished setting up analysis data\n";
     }
     
     bool allCPtsLieOnPeriodicCellFace(const std::vector<Point3D>& cpts,
