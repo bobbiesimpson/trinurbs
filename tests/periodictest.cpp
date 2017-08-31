@@ -1,6 +1,7 @@
 #include "base.h"
 #include "Geometry.h"
 #include "PeriodicForest.h"
+#include "OutputVTK.h"
 
 #include <iostream>
 
@@ -18,9 +19,11 @@ int main(int argc, char* argv[])
         trinurbs::error("Can't open geometry file");
     
     PeriodicForest pforest(g);
-    pforest.hrefine(2);
-
+    pforest.hrefine(1);
     
+    const uint npoints = 10;
+    OutputVTK output("periodic", npoints);
+    output.outputForestGeometry(pforest);
     
     return EXIT_SUCCESS;
 }

@@ -143,6 +143,9 @@ namespace trinurbs
         /// Get the degree for all parametric directions.
         UIntVec geometryDegree() const;
         
+        /// Is the element interpolatory at the given vertex?
+        bool interpolatoryAtVertex(const Vertex v) const;
+        
         /// Wrapper for other function
         std::pair<bool, GPt3D> containsParamPt(const ParamCoord& p) const
         {

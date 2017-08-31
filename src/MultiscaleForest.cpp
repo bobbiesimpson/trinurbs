@@ -21,7 +21,22 @@ namespace trinurbs {
                 ++icurrent;
             }
         
-        // construct global nodal connectivty (big!)
+        // construct global nodal connectivty
+        
+        // general idea is to loop over each macro element and search each of the
+        // neighbouring macro elements for previusly assigned node indices.
+        //
+        // We do a search over neighbouring 'geometry' elements at the micro scale
+        // making sure we check any elements connected to vertices, edge or faces
+        // of the periodic cell domain.  We use the present macro element as a reference
+        // for determining the order in which we traverse node indices over elements
+        // in the micro scale.
+        
+        
+        
+        
+        
+        
         
         // do some preprocessing of period (micro) cell connectivity
 //        const auto micro_forest = microForest();

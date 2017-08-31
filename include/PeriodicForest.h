@@ -73,12 +73,14 @@ namespace trinurbs {
     protected:
         
     private:
-        
-        /// Typedef of map which maps a macro face permutations to a vector of
-        /// local elements (with local face indices and face permutations)
-        typedef std::map<FacePermutation, std::vector<std::tuple<const NAnalysisElement*, Face, FacePermutation>>> FacePermutationMap;
+
         
         typedef std::vector<std::pair<const NAnalysisElement*, Face>> ElemFacePairVec;
+        
+        typedef std::vector<std::pair<const NAnalysisElement*, Edge>> ElemEdgePairVec;
+        
+        typedef std::vector<std::pair<const NAnalysisElement*, Vertex>> ElemVertexPairVec;
+
         
         /// Initialise data structures (after construction or refinement)
         void initGeometry();
@@ -86,21 +88,26 @@ namespace trinurbs {
         /// Initialise analysis data structures (called after refinement).
         void initAnalysisData();
         
-        /// Get vector of geometry elements and face for given cell face
-        const ElemFacePairVec& geomElFacePairVec(const uint cellface) const
+        /// Clear all geometry data
+        void clearGeometryData()
         {
-            assert(cellface < NFACES);
-            return mFaceGeomEls[cellface];
+            mFaceGeomEls.clear();
+            mEdgeGeomEls.clear();
+            mVertexGeomEls.clear();
         }
-        
-        /// Vector of maps of elements that lie on each macro face with
-        /// associcated permutations.  The size of this vector must equal 6.
-        std::vector<FacePermutationMap> mFaceElMaps;
-        
+
         /// Vectors of (geometry element, local face) pairs for each
         /// face of the periodic cell.  These are elements that intersect
         /// the periodic cell domain and are independent of refinement.
-        std::vector<ElemFacePairVec> mFaceGeomEls;
+        std::map<Face, ElemFacePairVec> mFaceGeomEls;
+        
+        /// Vector of geometry elements connected to each edge of the
+        /// periodic cell.
+        std::map<Edge, ElemEdgePairVec> mEdgeGeomEls;
+        
+        /// Vector of geometry elements connected to each vertex of the
+        /// periodic cell.
+        std::map<Vertex, ElemVertexPairVec> mVertexGeomEls;
         
         
     };
@@ -108,7 +115,15 @@ namespace trinurbs {
     /// Do all the given control points lie on the given face
     /// assuming a cell domain of [-1,1]^3?
     bool allCPtsLieOnPeriodicCellFace(const std::vector<Point3D>& cpts,
-                                      const Face f);
+                                      const Face cellface);
+    
+    /// Do all the given points lie on the given cell edge?
+    bool allCPtsLieOnPeriodicCellEdge(const std::vector<Point3D>& cpts,
+                                      const Edge celledge);
+    
+    // does the given point lie on the specified cell vertex? If yes,
+    // return true and the associated cell vertex.
+    std::pair<bool, Vertex> liesOnPeriodicCellVertex(const Point3D& p);
     
     
 }

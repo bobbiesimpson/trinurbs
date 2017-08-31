@@ -128,6 +128,7 @@ namespace trinurbs {
         void clearData()
         {
             mGlobalToLocalPairElMap.clear();
+            mPeriodicCellNodalConnectivity.clear();
         }
         
         /// Parameterisation of macroscale geometry
@@ -136,8 +137,11 @@ namespace trinurbs {
         /// Parameterisation of microscale geometry
         PeriodicForest mMicroForest;
         
-        /// Nodal connectivity of elements at micro scale
-        std::map<uint, std::vector<uint>> mMicroNodalConnectivity;
+        /// Nodal connectivity from periodic (global) cell node
+        /// index to global index.  We can then easily
+        /// retrieve the mapping from a micro element node
+        /// index to the global node index.
+        std::map<uint, std::vector<uint>> mPeriodicCellNodalConnectivity;
         
         /// map from global element index to (macro, micro) element pairing
         std::map<uint, std::tuple<uint, uint>> mGlobalToLocalPairElMap;

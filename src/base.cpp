@@ -53,6 +53,29 @@ namespace trinurbs
         }
     }
     
+    GPt3D parentIntervalVertex(const Vertex v)
+    {
+        switch(v)
+        {
+            case Vertex::VERTEX0:
+                return GPt3D(-1.0, -1.0, -1.0);
+            case Vertex::VERTEX1:
+                return GPt3D(1.0, -1.0, -1.0);
+            case Vertex::VERTEX2:
+                return GPt3D(-1.0, -1.0, 1.0);
+            case Vertex::VERTEX3:
+                return GPt3D(1.0, -1.0, 1.0);
+            case Vertex::VERTEX4:
+                return GPt3D(-1.0, 1.0, -1.0);
+            case Vertex::VERTEX5:
+                return GPt3D(1.0, 1.0, -1.0);
+            case Vertex::VERTEX6:
+                return GPt3D(-1.0, 1.0, 1.0);
+            case Vertex::VERTEX7:
+                return GPt3D(1.0, 1.0, 1.0);
+        }
+    }
+    
     Face faceType(const uint f)
     {
         switch(f)

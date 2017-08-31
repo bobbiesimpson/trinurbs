@@ -25,43 +25,78 @@ namespace trinurbs
         // (e.g. flips, rotations) which are required during construction
         // of the global connectivity
         
-        // first rescale geometry to biunit interval [-1,1]^3
-        
-
-        
-        mFaceGeomEls.clear();
-        mFaceGeomEls.resize(NFACES);
+        // Clear all geometry data first
+        clearGeometryData();
         
         // First determine the sets of geometry elements with faces on each macro
         // face
         const Geometry* geom = geometry();
         const Forest& primal = geom->primalForest();
 
-        // Determine set of geometry elements and local (geometry element) faces
-        // that lie on each face of the periodic domain. These elements (and any
-        // subelements thereof) will be used to connect neighbouring periodic
-        // cells
+        // Determine sets of geometry elements that lie on each face,
+        // edge and vertex of the macro (cell).
         
         for(uint iel = 0; iel < primal.elemN(); ++iel)
         {
             const auto geom_el = primal.bezierElement(iel);  // geometry element
             
-            // if all cpts of geometry element lie in plane of face
-            // then element intersects this macro cell face
+            // loop over geometry element vertices
+            for(uint ielvertex = 0; ielvertex < NVERTICES; ++ielvertex)
+            {
+                const Vertex elvertex = vertexType(ielvertex);
+            
+                // perhaps not the most robust approach, but we simply evaluate the coordinate
+                // at each vertex of the element and check for equality with the cell vertices.
+                const auto pair = liesOnPeriodicCellVertex(geom_el->eval(parentIntervalVertex(elvertex)));
+                
+                // this geometry vertex lies on the cell vertex. Add it to the map.
+                if(pair.first)
+                    mVertexGeomEls[pair.second].push_back(std::make_pair(geom_el, elvertex));
+                
+            }
+            
+            // loop over cell edges
+            for(uint icelledge = 0; icelledge < NEDGES; ++icelledge)
+            {
+                const Edge celledge = edgeType(icelledge);
+                
+                // loop over edges of the geometry element
+                for(uint ieledge = 0; ieledge < NEDGES; ++ieledge)
+                {
+                    const Edge eledge = edgeType(ieledge);
+                    const auto econn = geom_el->globalBasisIVec(eledge);
+                    
+                    // populate vector of control points on this element face
+                    std::vector<Point3D> cpts;
+                    for(const auto& ipt : econn)
+                        cpts.push_back(geom->controlPt(ipt).asCartesian());
+                    
+                    if(allCPtsLieOnPeriodicCellEdge(cpts, celledge))
+                        mEdgeGeomEls[celledge].push_back(std::make_pair(geom_el, eledge));
+                }
+            }
             
             // loop over cell faces
-            for(uint iface = 0; iface < NFACES; ++iface)
+            for(uint icellface = 0; icellface < NFACES; ++icellface)
             {
-                const Face face = faceType(iface);
-                const auto fconn = geom_el->globalBasisIVec(face);
+                const Face cellface = faceType(icellface);
                 
-                std::vector<Point3D> cpts;
-                
-                for(const auto& ipt : fconn)
-                    cpts.push_back(geom->controlPt(ipt).asCartesian());
-                
-                if(allCPtsLieOnPeriodicCellFace(cpts, face))
-                    mFaceGeomEls[iface].push_back(std::make_pair(geom_el,face));
+                // loop over geometry element faces
+                for(uint ielface = 0; ielface < NFACES; ++ielface)
+                {
+                    const Face elface = faceType(ielface);
+                    const auto fconn = geom_el->globalBasisIVec(elface);
+                    
+                    // populate vector of control points on this element face
+                    std::vector<Point3D> cpts;
+                    for(const auto& ipt : fconn)
+                        cpts.push_back(geom->controlPt(ipt).asCartesian());
+                    
+                    // if all control points on element face lie on cell face
+                    // then this element must lie on the cell face
+                    if(allCPtsLieOnPeriodicCellFace(cpts, cellface))
+                        mFaceGeomEls[cellface].push_back(std::make_pair(geom_el,elface));
+                }
             }
         }
         
@@ -69,9 +104,6 @@ namespace trinurbs
     
     void PeriodicForest::initAnalysisData()
     {
-        // set up maps which hold vectors of elements
-        mFaceElMaps.clear();
-        mFaceElMaps.resize(NFACES);
         
         // Construct vector of 'child' elements for each geometry element
         // that lies on a face/edge/vertex of the cell
@@ -89,27 +121,27 @@ namespace trinurbs
         }
         
         // loop over cell (macro) geometry faces
-        for(uint imacroface = 0; imacroface < NFACES; ++imacroface)
-        {
-            // get vector of geometry/face pairs for this face
-            const auto& geomface_vec = geomElFacePairVec(imacroface);
-            
-            // loop over geoemtry face pairs
-            for(const auto& gfacepair : geomface_vec)
-            {
-                const auto& g_pel = gfacepair.first; // pointer to geometry el
-                const auto& face = gfacepair.second; // local face of geom el
-                
-                // loop over children of this geometry element
-                for(const auto& pel : geom2child_map[g_pel])
-                {
-                    // temp code just to check map
-                    if(pel->liesOnParentElFace(face))
-                        mFaceElMaps[imacroface][FacePermutation::NOPERMUTATION].push_back(std::make_tuple(pel,face,FacePermutation::NOPERMUTATION));
-                }
-                
-            }
-        }
+//        for(uint imacroface = 0; imacroface < NFACES; ++imacroface)
+//        {
+//            // get vector of geometry/face pairs for this face
+//            const auto& geomface_vec = geomElFacePairVec(imacroface);
+//            
+//            // loop over geoemtry face pairs
+//            for(const auto& gfacepair : geomface_vec)
+//            {
+//                const auto& g_pel = gfacepair.first; // pointer to geometry el
+//                const auto& face = gfacepair.second; // local face of geom el
+//                
+//                // loop over children of this geometry element
+//                for(const auto& pel : geom2child_map[g_pel])
+//                {
+//                    // temp code just to check map
+//                    if(pel->liesOnParentElFace(face))
+//                        mFaceElMaps[imacroface][FacePermutation::NOPERMUTATION].push_back(std::make_tuple(pel,face,FacePermutation::NOPERMUTATION));
+//                }
+//                
+//            }
+//        }
         
         
         std::cout << "Finished setting up analysis data\n";
@@ -154,6 +186,86 @@ namespace trinurbs
             if(!logically_equal(p[comp], val))
                 return false;
         return true;
+    }
+    
+    bool allCPtsLieOnPeriodicCellEdge(const std::vector<Point3D>& cpts,
+                                      const Edge celledge)
+    {
+
+        std::vector<std::pair<uint,double>> cvec{};
+        
+        switch(celledge)
+        {
+            case Edge::EDGE0:
+                cvec.push_back(std::make_pair(1, -1.0));
+                cvec.push_back(std::make_pair(2, -1.0));
+                break;
+            case Edge::EDGE1:
+                cvec.push_back(std::make_pair(1, -1.0));
+                cvec.push_back(std::make_pair(2, 1.0));
+                break;
+            case Edge::EDGE2:
+                cvec.push_back(std::make_pair(0, -1.0));
+                cvec.push_back(std::make_pair(1, -1.0));
+                break;
+            case Edge::EDGE3:
+                cvec.push_back(std::make_pair(0, 1.0));
+                cvec.push_back(std::make_pair(1, -1.0));
+                break;
+            case Edge::EDGE4:
+                cvec.push_back(std::make_pair(1, 1.0));
+                cvec.push_back(std::make_pair(2, -1.0));
+                break;
+            case Edge::EDGE5:
+                cvec.push_back(std::make_pair(1, 1.0));
+                cvec.push_back(std::make_pair(2, 1.0));
+                break;
+            case Edge::EDGE6:
+                cvec.push_back(std::make_pair(0, -1.0));
+                cvec.push_back(std::make_pair(1, 1.0));
+                break;
+            case Edge::EDGE7:
+                cvec.push_back(std::make_pair(0, 1.0));
+                cvec.push_back(std::make_pair(1, 1.0));
+                break;
+            case Edge::EDGE8:
+                cvec.push_back(std::make_pair(0, -1.0));
+                cvec.push_back(std::make_pair(2, -1.0));
+                break;
+            case Edge::EDGE9:
+                cvec.push_back(std::make_pair(0, 1.0));
+                cvec.push_back(std::make_pair(2, -1.0));
+                break;
+            case Edge::EDGE10:
+                cvec.push_back(std::make_pair(0, -1.0));
+                cvec.push_back(std::make_pair(2, 1.0));
+                break;
+            case Edge::EDGE11:
+                cvec.push_back(std::make_pair(0, 1.0));
+                cvec.push_back(std::make_pair(2, 1.0));
+                break;
+        }
+        
+        
+        for(const auto& p : cpts)
+            for(const auto& pair : cvec)
+                if(!logically_equal(p[pair.first], pair.second))
+                    return false;
+        return true;
+    }
+    
+    
+    std::pair<bool, Vertex> liesOnPeriodicCellVertex(const Point3D& p)
+    {
+        for(uint icellvtx = 0; icellvtx < NVERTICES; ++icellvtx)
+        {
+            const auto vtx = vertexType(icellvtx);
+            const auto gpt = parentIntervalVertex(vtx);
+            const Point3D ptvtx(gpt.xi, gpt.eta,gpt.zeta);
+            if(ptvtx == p)
+                return std::make_pair(true,vtx);
+        }
+        return std::make_pair(false, Vertex::VERTEX0);
     }
     
 }

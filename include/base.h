@@ -185,6 +185,9 @@ namespace trinurbs
     /// Get vertex type given an unsigned integer
     Vertex vertexType(const uint v);
     
+    /// Get gauss point of given vertex in [-1,1]^3
+    GPt3D parentIntervalVertex(const Vertex v);
+    
     /// Edge enumeration
     ///      ---5----
     ///    /|       /|
