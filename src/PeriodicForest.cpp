@@ -52,7 +52,6 @@ namespace trinurbs
                 // this geometry vertex lies on the cell vertex. Add it to the map.
                 if(pair.first)
                     mVertexGeomEls[pair.second].push_back(std::make_pair(geom_el, elvertex));
-                
             }
             
             // loop over cell edges
@@ -106,11 +105,27 @@ namespace trinurbs
     {
         
         // Construct vector of 'child' elements for each geometry element
-        // that lies on a face/edge/vertex of the cell
+        // that lies on a face/edge/vertex of the cell.
+        
+        // The order in which these are stored is important. We order them
+        // according to face and edge coordinate systems described in base.h
+        
+        // Edge elements are ordered in terms of positive edges
+        
+        // Face elements are ordered in a local u-v face coordinate system
+        // first in terms of positively increasing u values and then v value.
+        
+        // Vertex element have no order since we assume only one analysis
+        // element at each vertex.
         
         // map from geometry element to child analysis elements
         // could be optimised to reduce to set of geometry elements
         // that only lie on faces/edges/vertices of cell geometry.
+        
+        clearAnalysisData();
+        
+        // TODO: fill up children maps
+        
         std::map<const NAnalysisElement*, std::vector<const NAnalysisElement*>> geom2child_map;
         
         // loop over (refined) analysis elements and populate child map

@@ -95,6 +95,14 @@ namespace trinurbs {
             mEdgeGeomEls.clear();
             mVertexGeomEls.clear();
         }
+        
+        /// Clear all analysis data
+        void clearAnalysisData()
+        {
+            mFaceGeomElChildrenMap.clear();
+            mEdgeGeomElChildrenMap.clear();
+            mVertexGeomElChildMap.clear();
+        }
 
         /// Vectors of (geometry element, local face) pairs for each
         /// face of the periodic cell.  These are elements that intersect
@@ -109,6 +117,16 @@ namespace trinurbs {
         /// periodic cell.
         std::map<Vertex, ElemVertexPairVec> mVertexGeomEls;
         
+        /// Map from a face geometry element to its ordered set
+        /// of child elements
+        std::map<std::pair<NAnalysisElement*, Face>, std::vector<NAnalysisElement*>> mFaceGeomElChildrenMap;
+        
+        /// Map from a edge geometry element to its ordered set
+        /// of child elements
+        std::map<std::pair<NAnalysisElement*, Edge>, std::vector<NAnalysisElement*>> mEdgeGeomElChildrenMap;
+        
+        /// Map from a vertex geometry element to child element
+        std::map<NAnalysisElement*, NAnalysisElement*> mVertexGeomElChildMap;
         
     };
     
