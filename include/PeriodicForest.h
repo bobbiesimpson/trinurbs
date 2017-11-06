@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <tuple>
+#include <set>
 
 namespace trinurbs {
     
@@ -35,7 +36,7 @@ namespace trinurbs {
             Forest(g)
         {
             g.normaliseToParentInterval();
-            initGeometry();
+//            initGeometry();
             initAnalysisData();
         }
         
@@ -70,63 +71,44 @@ namespace trinurbs {
             initAnalysisData();
         }
         
+        
+        
     protected:
         
     private:
-
-        
-        typedef std::vector<std::pair<const NAnalysisElement*, Face>> ElemFacePairVec;
-        
-        typedef std::vector<std::pair<const NAnalysisElement*, Edge>> ElemEdgePairVec;
-        
-        typedef std::vector<std::pair<const NAnalysisElement*, Vertex>> ElemVertexPairVec;
-
         
         /// Initialise data structures (after construction or refinement)
-        void initGeometry();
+//        void initGeometry();
         
         /// Initialise analysis data structures (called after refinement).
         void initAnalysisData();
         
         /// Clear all geometry data
-        void clearGeometryData()
-        {
-            mFaceGeomEls.clear();
-            mEdgeGeomEls.clear();
-            mVertexGeomEls.clear();
-        }
+//        void clearGeometryData()
+//        {
+//            
+//        }
         
         /// Clear all analysis data
         void clearAnalysisData()
         {
-            mFaceGeomElChildrenMap.clear();
-            mEdgeGeomElChildrenMap.clear();
-            mVertexGeomElChildMap.clear();
+            mGrevilleAbscissaMap.clear();
+            mSurfaceGrevilleIVec.clear();
+            mInteriorGrevilleIVec.clear();
         }
 
-        /// Vectors of (geometry element, local face) pairs for each
-        /// face of the periodic cell.  These are elements that intersect
-        /// the periodic cell domain and are independent of refinement.
-        std::map<Face, ElemFacePairVec> mFaceGeomEls;
+        /// Vector of greville abscissa for this forest. The order
+        /// corresponds directly to the global nodal connectivity
+        /// of this forest.
+        std::map<uint, Point3D> mGrevilleAbscissaMap;
         
-        /// Vector of geometry elements connected to each edge of the
-        /// periodic cell.
-        std::map<Edge, ElemEdgePairVec> mEdgeGeomEls;
+        /// Index of Greville parametric coordinates that lie
+        /// on the unit cell surface.
+        std::set<uint> mSurfaceGrevilleIVec;
         
-        /// Vector of geometry elements connected to each vertex of the
-        /// periodic cell.
-        std::map<Vertex, ElemVertexPairVec> mVertexGeomEls;
-        
-        /// Map from a face geometry element to its ordered set
-        /// of child elements
-        std::map<std::pair<NAnalysisElement*, Face>, std::vector<NAnalysisElement*>> mFaceGeomElChildrenMap;
-        
-        /// Map from a edge geometry element to its ordered set
-        /// of child elements
-        std::map<std::pair<NAnalysisElement*, Edge>, std::vector<NAnalysisElement*>> mEdgeGeomElChildrenMap;
-        
-        /// Map from a vertex geometry element to child element
-        std::map<NAnalysisElement*, NAnalysisElement*> mVertexGeomElChildMap;
+        /// Index of Greville parametric coordinates that lie
+        /// in the cell interior (not on the surface).
+        std::set<uint> mInteriorGrevilleIVec;
         
     };
     

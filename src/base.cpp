@@ -120,6 +120,12 @@ namespace trinurbs
         }
     }
     
+    std::ostream& operator<<(std::ostream& ost, const ParamCoord& p)
+    {
+        ost << p.u << "," << p.v << "," << p.w;
+        return ost;
+    }
+    
     std::ostream& operator<<(std::ostream& ost, Vertex v)
     {
         switch (v) {

@@ -151,6 +151,9 @@ namespace trinurbs
         double w;
     };
     
+    /// Overload output operator
+    std::ostream& operator<<(std::ostream& ost, const ParamCoord& p);
+    
     /// Vertex enumeration
     ///    6 ------7
     ///   /|      /|

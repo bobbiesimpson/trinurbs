@@ -80,6 +80,8 @@ namespace trinurbs
             throw std::runtime_error("Basis function not implemented.");
         }
         
+        
+        
         /// Return basis without Piola tranform.
         /// Default behaviour is to return the above basis() function
         virtual std::vector<T> localBasis(const double xi,

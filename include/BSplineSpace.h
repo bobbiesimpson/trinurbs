@@ -133,52 +133,66 @@ namespace trinurbs
             return std::make_pair(mUniqueKnotVecs[dir].front(), mUniqueKnotVecs[dir].back());
         }
         
-        /// Greville abscissa not yet implemented
         
-//        /// Get a 'global' greville abscissa index given parametric indices
-//        uint globalGrevillePtI(const uint i,
-//                               const uint j) const
-//        {
-//            assert(i < grevilleAbscissaPtN(ParamDir::S));
-//            assert(j < grevilleAbscissaPtN(ParamDir::T));
-//            return j * grevilleAbscissaPtN(ParamDir::S) + i;
-//            
-//        }
-//        /// Number of greville abscissa points in given direction
-//        inline uint grevilleAbscissaPtN(const ParamDir dir) const { return basisFuncN(dir); }
-//        
-//        /// Number of greville abscissa points on this space
-//        inline uint grevilleAbscissaPtN() const { return basisFuncN(); }
-//        
-//        /// Greville abscissa point getter
-//        double grevilleAbscissaPt(const uint i, const ParamDir dir) const
-//        {
-//            assert(i < grevilleAbscissaPtN(dir));
-//            double xi = 0.0;
-//            for(uint k = i + 1; k < i + degree(dir) + 1; ++k)
-//                xi += knot(k, dir) / degree(dir);
-//            return xi;
-//        }
-//        
-//        /// Return the greville abscissa vector for a given parametric direction
-//        std::vector<double> grevilleAbscissa(const ParamDir dir) const
-//        {
-//            std::vector<double> v;
-//            for(uint i = 0; i < grevilleAbscissaPtN(dir); ++i)
-//                v.push_back(grevilleAbscissaPt(i, dir));
-//            return v;
-//        }
-//        
-//        /// Get a two dimensionl Greville point
-//        GPt2D grevilleAbscissaPt(const uint i) const
-//        {
-//            assert(i < grevilleAbscissaPtN());
-//            const uint sindex = i % grevilleAbscissaPtN(S);
-//            const uint tindex = i / grevilleAbscissaPtN(S);
-//            return GPt2D(grevilleAbscissaPt(sindex, S),
-//                         grevilleAbscissaPt(tindex, T));
-//        }
-//        
+        /// Get a 'global' greville abscissa index given parametric indices
+        uint globalGrevillePtI(const uint i,
+                               const uint j,
+                               const uint k) const
+        {
+            assert(i < grevilleAbscissaPtN(ParamDir::U));
+            assert(j < grevilleAbscissaPtN(ParamDir::V));
+            assert(k < grevilleAbscissaPtN(ParamDir::W));
+            
+            const uint nu = grevilleAbscissaPtN(ParamDir::U);
+            const uint nv = grevilleAbscissaPtN(ParamDir::V);
+            
+            return k * nu * nv + j * nu + i;
+        }
+        /// Number of greville abscissa points in given direction
+        inline uint grevilleAbscissaPtN(const ParamDir dir) const { return basisFuncN(dir); }
+
+        /// Number of greville abscissa points on this space
+        inline uint grevilleAbscissaPtN() const { return basisFuncN(); }
+
+        /// Greville abscissa point getter given a local index and parametric direction
+        double grevilleAbscissaPt(const uint i,
+                                  const ParamDir dir) const
+        {
+            assert(i < grevilleAbscissaPtN(dir));
+            
+            double xi = 0.0;
+            for(uint k = i + 1; k < i + degree(dir) + 1; ++k)
+                xi += knot(k, dir) / degree(dir);
+            return xi;
+        }
+
+        /// Return the greville abscissa vector for a given parametric direction
+        std::vector<double> grevilleAbscissa(const ParamDir dir) const
+        {
+            std::vector<double> v;
+            for(uint i = 0; i < grevilleAbscissaPtN(dir); ++i)
+                v.push_back(grevilleAbscissaPt(i, dir));
+            return v;
+        }
+
+        /// Get a three dimensional Greville point given a global index
+        ParamCoord grevilleAbscissaPt(const uint index) const
+        {
+            assert(index < grevilleAbscissaPtN());
+            
+            const uint nu = grevilleAbscissaPtN(ParamDir::U);
+            const uint nv = grevilleAbscissaPtN(ParamDir::V);
+            
+            const uint nuv = nu * nv;
+            const uint k = index / nuv;
+            
+            //return std::make_tuple(ielem % nel_u, (ielem - k * nuv) / nel_u, k);
+            
+            return ParamCoord(grevilleAbscissaPt(index % nu, ParamDir::U),
+                              grevilleAbscissaPt((index - k * nuv) / nu, ParamDir::V),
+                              grevilleAbscissaPt(k, ParamDir::W));
+        }
+//
 //        /// REturn the Greville abscissa  points along the given edge
 //        std::vector<GPt2D> grevilleAbscissaPts(const Edge e) const
 //        {
