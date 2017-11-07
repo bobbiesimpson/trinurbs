@@ -517,10 +517,7 @@ namespace trinurbs
         /// Clear all data related to elements (used after applying refinement)
         void clearElementData()
         {
-            /// TODO
-            
-//            mElems.clear();
-//            mBezierElems.clear();
+            mBezierElems.clear();
             mElemIndexMap.clear();
             mGlobalDofN = std::make_pair(false, 0);
         }

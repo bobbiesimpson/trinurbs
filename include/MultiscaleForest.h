@@ -112,7 +112,7 @@ namespace trinurbs {
         }
         
         /// non const microforest getter
-        Forest& microForest()
+        PeriodicForest& microForest()
         {
             return mMicroForest;
         }

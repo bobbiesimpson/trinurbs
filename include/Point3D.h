@@ -107,6 +107,15 @@ namespace trinurbs
         /// Cast to vector
         std::vector<double> asVec() const { return { getCoord(X), getCoord(Y), getCoord(Z)}; }
         
+        bool operator<(const Point3D& p) const
+        {
+            if(!logically_equal(getCoord(0), p[0]))
+                return getCoord(0) < p[0];
+            if(!logically_equal(getCoord(1), p[1]))
+                return getCoord(1) < p[1];
+            return getCoord(2) < p[2];
+        }
+        
     private:
         
         /// define print implementation functions
@@ -130,7 +139,7 @@ namespace trinurbs
     Point3D cross(const Point3D& p1, const Point3D& p2);
     
     /// Less-than operator
-    bool operator<(const Point3D& p1, const Point3D& p2);
+    //bool operator<(const Point3D& p1, const Point3D& p2);
     
     /// Return the lower bound of the two given points
     Point3D min(const Point3D& p1, const Point3D& p2);

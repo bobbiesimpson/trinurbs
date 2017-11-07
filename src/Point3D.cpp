@@ -45,14 +45,14 @@ namespace trinurbs
                        p1[0] * p2[1] - p1[1] * p2[0]);
     }
     
-    bool operator<(const Point3D& p1, const Point3D& p2)
-    {
-        if(p1[0] != p2[0])
-            return p1[0] < p2[0];
-        if(p1[1] != p2[1])
-            return p1[1] < p2[1];
-        return p1[2] < p2[2];
-    }
+//    bool operator<(const Point3D& p1, const Point3D& p2)
+//    {
+//        if(p1[0] != p2[0])
+//            return p1[0] < p2[0];
+//        if(p1[1] != p2[1])
+//            return p1[1] < p2[1];
+//        return p1[2] < p2[2];
+//    }
     
     Point3D min(const Point3D& p1, const Point3D& p2)
     {

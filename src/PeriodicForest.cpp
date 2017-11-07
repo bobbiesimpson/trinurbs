@@ -66,8 +66,8 @@ namespace trinurbs
 
         // Now copy cache to member data
         mGrevilleAbscissaMap = greville_pt_cache;
-        mSurfaceGrevilleIVec = greville_surface_cache;
-        mInteriorGrevilleIVec = greville_interior_cache;
+        mSurfaceGrevilleISet = greville_surface_cache;
+        mInteriorGrevilleISet = greville_interior_cache;
         
         std::cout << "Finished setting up analysis data\n";
     }

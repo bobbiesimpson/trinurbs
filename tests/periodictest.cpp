@@ -2,8 +2,10 @@
 #include "Geometry.h"
 #include "PeriodicForest.h"
 #include "OutputVTK.h"
+#include "Point3D.h"
 
 #include <iostream>
+#include <map>
 
 
 using namespace trinurbs;
@@ -20,11 +22,11 @@ int main(int argc, char* argv[])
     
     PeriodicForest pforest(g);
     pforest.hrefine(2);
-
     
     const uint npoints = 10;
     OutputVTK output("periodic", npoints);
     output.outputForestGeometry(pforest);
+    
     
     return EXIT_SUCCESS;
 }

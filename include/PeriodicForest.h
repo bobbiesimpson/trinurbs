@@ -36,7 +36,6 @@ namespace trinurbs {
             Forest(g)
         {
             g.normaliseToParentInterval();
-//            initGeometry();
             initAnalysisData();
         }
         
@@ -71,30 +70,45 @@ namespace trinurbs {
             initAnalysisData();
         }
         
+        /// Greville point accessor
+        Point3D grevillePt(const uint i) const
+        {
+            return mGrevilleAbscissaMap.at(i);
+        }
         
+        /// Total number of Greville abscissa
+        size_t grevillePtN() const
+        {
+            return mGrevilleAbscissaMap.size();
+        }
+        
+        /// Accessor for set of surface Greville
+        /// abscissa indices
+        const std::set<uint>& surfaceGrevilleISet() const
+        {
+            return mSurfaceGrevilleISet;
+        }
+        
+        /// Accessor for set of interior Greville
+        /// abscissa indices
+        const std::set<uint>& interiorGrevilleISet() const
+        {
+            return mInteriorGrevilleISet;
+        }
         
     protected:
         
     private:
         
-        /// Initialise data structures (after construction or refinement)
-//        void initGeometry();
-        
         /// Initialise analysis data structures (called after refinement).
         void initAnalysisData();
-        
-        /// Clear all geometry data
-//        void clearGeometryData()
-//        {
-//            
-//        }
         
         /// Clear all analysis data
         void clearAnalysisData()
         {
             mGrevilleAbscissaMap.clear();
-            mSurfaceGrevilleIVec.clear();
-            mInteriorGrevilleIVec.clear();
+            mSurfaceGrevilleISet.clear();
+            mInteriorGrevilleISet.clear();
         }
 
         /// Vector of greville abscissa for this forest. The order
@@ -104,11 +118,11 @@ namespace trinurbs {
         
         /// Index of Greville parametric coordinates that lie
         /// on the unit cell surface.
-        std::set<uint> mSurfaceGrevilleIVec;
+        std::set<uint> mSurfaceGrevilleISet;
         
         /// Index of Greville parametric coordinates that lie
         /// in the cell interior (not on the surface).
-        std::set<uint> mInteriorGrevilleIVec;
+        std::set<uint> mInteriorGrevilleISet;
         
     };
     
