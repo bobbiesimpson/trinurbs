@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     forest.hrefine(refine);
     std::cout << "Created forest with " << forest.elemN() << " elements\n";
     
+    
     // now do a simple L2 projection
     
     // first set up data structures

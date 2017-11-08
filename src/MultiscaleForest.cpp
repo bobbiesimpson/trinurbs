@@ -43,7 +43,7 @@ namespace trinurbs {
         
         for(uint imacro = 0; imacro < macro_forest.elemN(); ++imacro)
         {
-            std::cout << "Element: " << imacro << "\n\n";
+            //std::cout << "Element: " << imacro << "\n\n";
             // Macro element
             const auto macro_el = macro_forest.bezierElement(imacro);
             
@@ -62,7 +62,7 @@ namespace trinurbs {
                 // And map to physical space using the macro element
                 const Point3D x = macro_el->eval(gpt[0], gpt[1], gpt[2]);
                 
-                std::cout << x << "\n";
+//                std::cout << x << "\n";
                 
                 auto find = pt_cache.find(x);
                 if(find != pt_cache.end())
@@ -89,17 +89,14 @@ namespace trinurbs {
             
             // Assign global connectivity for this macro element
             temp_gconn_map[imacro] = pconn;
+            mGlobalDofN = current_gdof;
             
         }
         
         // And now set member data to fully complete global connectivity map
-        mPeriodicCellNodalConnectivity = temp_gconn_map;
-        
-        
+        mPeriodicForestNodalConnectivity = temp_gconn_map;
         
 
-        
-        
     }
     
 }

@@ -44,6 +44,12 @@ namespace trinurbs
                               const std::vector<double>& soln,
                               const uint nlocaldof = 1) const;
         
+        /// Output nodal field of a multiscale forest to vtu file
+        void outputNodalField(const MultiscaleForest& f,
+                              const std::string& fieldname,
+                              const std::vector<double>& soln,
+                              const uint nlocaldof = 1) const;
+        
         /// Sample point number setter
         void setSamplePtN(const uint n)
         {

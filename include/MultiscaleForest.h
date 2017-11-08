@@ -29,7 +29,8 @@ namespace trinurbs {
                          Geometry& microgeom)
         :
             mMacroForest(macrogeom),
-            mMicroForest(microgeom)
+            mMicroForest(microgeom),
+            mGlobalDofN(0)
         {
             init();
         }
@@ -49,6 +50,16 @@ namespace trinurbs {
             if(0 == refine) return;
             
             microForest().hrefine(refine);
+            init();
+        }
+        
+        void hrefine(const uint macrorefine,
+                     const uint microrefine)
+        {
+            if(macrorefine != 0)
+                macroForest().hrefine(macrorefine);
+            if(microrefine != 0)
+                microForest().hrefine(microrefine);
             init();
         }
         
@@ -85,8 +96,14 @@ namespace trinurbs {
             if(find == mGlobalToLocalPairElMap.end())
                 error("Bad multiscale element index requested.");
             
-            return make_unique<MultiscaleBezierNodalElement>(macroForest().bezierElement(std::get<0>(find->second)),
-                                                             microForest().bezierElement(std::get<1>(find->second)));
+            const uint imacro = std::get<0>(find->second);
+            const uint imicro = std::get<1>(find->second);
+            
+            return make_unique<MultiscaleBezierNodalElement>(this,
+                                                             imacro,
+                                                             imicro,
+                                                             macroForest().bezierElement(imacro),
+                                                             microForest().bezierElement(imicro));
         }
         
         /// Total number of elements for entire microscale geometry
@@ -117,6 +134,19 @@ namespace trinurbs {
             return mMicroForest;
         }
         
+        /// Get global basis connectivity given a macro element
+        /// index. 
+        std::vector<uint> globalBasisIVec(const uint imacro) const
+        {
+            return mPeriodicForestNodalConnectivity.at(imacro);
+        }
+        
+        /// No. of global dofs
+        uint globalDofN() const
+        {
+            return mGlobalDofN;
+        }
+        
     protected:
         
     private:
@@ -128,7 +158,7 @@ namespace trinurbs {
         void clearData()
         {
             mGlobalToLocalPairElMap.clear();
-            mPeriodicCellNodalConnectivity.clear();
+            mPeriodicForestNodalConnectivity.clear();
         }
         
         /// Parameterisation of macroscale geometry
@@ -137,14 +167,17 @@ namespace trinurbs {
         /// Parameterisation of microscale geometry
         PeriodicForest mMicroForest;
         
-        /// Nodal connectivity from periodic (global) cell node
+        /// Nodal connectivity from periodic forest (global) node
         /// index to global index.  We can then easily
         /// retrieve the mapping from a micro element node
         /// index to the global node index.
-        std::map<uint, std::vector<uint>> mPeriodicCellNodalConnectivity;
+        std::map<uint, std::vector<uint>> mPeriodicForestNodalConnectivity;
         
         /// map from global element index to (macro, micro) element pairing
         std::map<uint, std::tuple<uint, uint>> mGlobalToLocalPairElMap;
+        
+        /// Global dof no.
+        uint mGlobalDofN;
     };
 }
 #endif
