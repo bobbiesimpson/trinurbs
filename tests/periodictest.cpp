@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         trinurbs::error("Can't open geometry file");
     
     PeriodicForest pforest(g);
-    pforest.hrefine(2);
+    //pforest.hrefine(2);
     
     const uint npoints = 10;
     OutputVTK output("periodic", npoints);

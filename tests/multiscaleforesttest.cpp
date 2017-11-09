@@ -102,10 +102,6 @@ int main(int argc, char* argv[])
         const auto bel = multiscaleforest.multiscaleBezierElement(ielem);
         const auto conn = bel->globalBasisIVec();
         
-        //        for(const auto& i : conn)
-        //            std::cout << i << "\t";
-        //        std::cout << "\n";
-        
         // local stiffness matrix
         std::vector<std::vector<double>> submatrix;
         for(size_t i = 0; i < conn.size(); ++i)
@@ -140,7 +136,6 @@ int main(int argc, char* argv[])
                 //                std::cout << submatrix[itest][itrial] << "\n";
                 coefficients.push_back(Triplet(gtest_i, gtrial_i, submatrix[itest][itrial]));
             }
-            
         }
     }
     
