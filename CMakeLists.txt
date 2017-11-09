@@ -17,7 +17,7 @@ include_directories( ${VTK_INCLUDE_DIRS} )
 set(THIS_LINK_LIBS ${THIS_LINK_LIBS} ${VTK_LIBRARIES})
 
 # add Eigen library include fileds
-include_directories(SYSTEM ${fast-ibem_SOURCE_DIR}/libs)
+include_directories(SYSTEM ${trinurbs_SOURCE_DIR}/libs)
 
 set(LIB_INCLUDE_DIR ${trinurbs_SOURCE_DIR}/include)
 include_directories(${LIB_INCLUDE_DIR})
