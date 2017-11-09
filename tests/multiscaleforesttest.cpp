@@ -85,73 +85,73 @@ int main(int argc, char* argv[])
               << multiscaleforest.microForest().elemN() << " elements (micro), "
               << multiscaleforest.elemN() << " elements total\n\n";
     
-    double v = 0.0;
-    
-    std::cout << "Now performing simple L2 projection test....\n";
-    
-    std::vector<Triplet> coefficients;      // coefficients for sparse matrix
-    const uint ndof = multiscaleforest.globalDofN();
-    SpMat K(ndof, ndof);                    // K matrix
-    Eigen::VectorXd f(ndof);                // force vector
-    
-    for(uint i = 0; i < ndof; ++i)
-        f(i) = 0.0;
-    
-    for(uint ielem = 0; ielem < multiscaleforest.elemN(); ++ielem)
-    {
-        const auto bel = multiscaleforest.multiscaleBezierElement(ielem);
-        const auto conn = bel->globalBasisIVec();
-        
-        //        for(const auto& i : conn)
-        //            std::cout << i << "\t";
-        //        std::cout << "\n";
-        
-        // local stiffness matrix
-        std::vector<std::vector<double>> submatrix;
-        for(size_t i = 0; i < conn.size(); ++i)
-            submatrix.push_back(std::vector<double>(conn.size(), 0.0));
-        
-        for(trinurbs::IElemIntegrate igpt(bel->integrationOrder()); !igpt.isDone(); ++igpt)
-        {
-            const auto gpt = igpt.get();
-            const auto basis = bel->basis(gpt.xi, gpt.eta, gpt.zeta);
-            const auto jdet = bel->jacDet(gpt.xi, gpt.eta, gpt.zeta);
-            const auto phys_coord = bel->eval(gpt.xi, gpt.eta, gpt.zeta);
-            const double funcval = myfunc(phys_coord[0], phys_coord[1], phys_coord[2]);
-            
-            for(size_t itest = 0; itest < conn.size(); ++itest)
-            {
-                const auto gtest_i = conn[itest];
-                for(size_t itrial = 0; itrial < conn.size(); ++itrial)
-                    submatrix[itest][itrial] += basis[itest] * basis[itrial] * jdet * igpt.getWeight();
-                
-                // force vector assembly
-                f(gtest_i) += basis[itest] * funcval * igpt.getWeight() * jdet;
-            }
-            v += jdet * igpt.getWeight();
-        }
-        
-        for(size_t itest = 0; itest < conn.size(); ++itest)
-        {
-            const auto gtest_i = conn[itest];
-            for(size_t itrial = 0; itrial < conn.size(); ++itrial)
-            {
-                const auto gtrial_i = conn[itrial];
-                //                std::cout << submatrix[itest][itrial] << "\n";
-                coefficients.push_back(Triplet(gtest_i, gtrial_i, submatrix[itest][itrial]));
-            }
-            
-        }
-    }
-    
-    K.setFromTriplets(coefficients.begin(), coefficients.end());
-    
-    Eigen::SimplicialCholesky<SpMat> chol(K);  // performs a Cholesky factorization of A
-    Eigen::VectorXd x_soln = chol.solve(f);
+//    double v = 0.0;
+//    
+//    std::cout << "Now performing simple L2 projection test....\n";
+//    
+//    std::vector<Triplet> coefficients;      // coefficients for sparse matrix
+//    const uint ndof = multiscaleforest.globalDofN();
+//    SpMat K(ndof, ndof);                    // K matrix
+//    Eigen::VectorXd f(ndof);                // force vector
+//    
+//    for(uint i = 0; i < ndof; ++i)
+//        f(i) = 0.0;
+//    
+//    for(uint ielem = 0; ielem < multiscaleforest.elemN(); ++ielem)
+//    {
+//        const auto bel = multiscaleforest.multiscaleBezierElement(ielem);
+//        const auto conn = bel->globalBasisIVec();
+//        
+//        //        for(const auto& i : conn)
+//        //            std::cout << i << "\t";
+//        //        std::cout << "\n";
+//        
+//        // local stiffness matrix
+//        std::vector<std::vector<double>> submatrix;
+//        for(size_t i = 0; i < conn.size(); ++i)
+//            submatrix.push_back(std::vector<double>(conn.size(), 0.0));
+//        
+//        for(trinurbs::IElemIntegrate igpt(bel->integrationOrder()); !igpt.isDone(); ++igpt)
+//        {
+//            const auto gpt = igpt.get();
+//            const auto basis = bel->basis(gpt.xi, gpt.eta, gpt.zeta);
+//            const auto jdet = bel->jacDet(gpt.xi, gpt.eta, gpt.zeta);
+//            const auto phys_coord = bel->eval(gpt.xi, gpt.eta, gpt.zeta);
+//            const double funcval = myfunc(phys_coord[0], phys_coord[1], phys_coord[2]);
+//            
+//            for(size_t itest = 0; itest < conn.size(); ++itest)
+//            {
+//                const auto gtest_i = conn[itest];
+//                for(size_t itrial = 0; itrial < conn.size(); ++itrial)
+//                    submatrix[itest][itrial] += basis[itest] * basis[itrial] * jdet * igpt.getWeight();
+//                
+//                // force vector assembly
+//                f(gtest_i) += basis[itest] * funcval * igpt.getWeight() * jdet;
+//            }
+//            v += jdet * igpt.getWeight();
+//        }
+//        
+//        for(size_t itest = 0; itest < conn.size(); ++itest)
+//        {
+//            const auto gtest_i = conn[itest];
+//            for(size_t itrial = 0; itrial < conn.size(); ++itrial)
+//            {
+//                const auto gtrial_i = conn[itrial];
+//                //                std::cout << submatrix[itest][itrial] << "\n";
+//                coefficients.push_back(Triplet(gtest_i, gtrial_i, submatrix[itest][itrial]));
+//            }
+//            
+//        }
+//    }
+//    
+//    K.setFromTriplets(coefficients.begin(), coefficients.end());
+//    
+//    Eigen::SimplicialCholesky<SpMat> chol(K);  // performs a Cholesky factorization of A
+//    Eigen::VectorXd x_soln = chol.solve(f);
     
     std::vector<double> soln(multiscaleforest.globalDofN(), 0.0);
     for(size_t i = 0; i < soln.size(); ++i)
-        soln[i] = x_soln(i);
+        soln[i] = 1.0;//x_soln(i);
     
 //    for(size_t iel = 0; iel < multiscaleforest.elemN(); ++iel)
 //    {
@@ -166,11 +166,13 @@ int main(int argc, char* argv[])
 //            v += el->jacDet(gpt.xi, gpt.eta, gpt.zeta) * igpt.getWeight();
 //        }
 //    }
-    std::cout << "volume of multiscale geometry = " << v << "\n";
+//    std::cout << "volume of multiscale geometry = " << v << "\n";
     
-    const uint ngridpts = 6;
+    const uint ngridpts = 2;
     OutputVTK output("multiscale_", ngridpts);
     output.outputNodalField(multiscaleforest, "testdata", soln);
+    
+    output.outputForestGeometry(multiscaleforest.microForest());
     
     std::cout << "done!\n";
     
