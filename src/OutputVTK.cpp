@@ -92,29 +92,29 @@ namespace trinurbs
         if(!writer->Write())
             error( "Cannot write vtk file" );
         
-        vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
-        vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-        reader->SetFileName(fname.c_str());
-        reader->Update();
-        
-        vtkSmartPointer<vtkDataSetMapper> mapper =
-        vtkSmartPointer<vtkDataSetMapper>::New();
-        mapper->SetInputConnection(reader->GetOutputPort());
-        
-        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-        actor->SetMapper(mapper);
-        
-        vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-        vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-        renderWindow->AddRenderer(renderer);
-        vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-        renderWindowInteractor->SetRenderWindow(renderWindow);
-        
-        renderer->AddActor(actor);
-        renderer->SetBackground(.3, .6, .3); // Background color green
-        
-        renderWindow->Render();
-        renderWindowInteractor->Start();
+//        vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
+//        vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+//        reader->SetFileName(fname.c_str());
+//        reader->Update();
+//        
+//        vtkSmartPointer<vtkDataSetMapper> mapper =
+//        vtkSmartPointer<vtkDataSetMapper>::New();
+//        mapper->SetInputConnection(reader->GetOutputPort());
+//        
+//        vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+//        actor->SetMapper(mapper);
+//        
+//        vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+//        vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
+//        renderWindow->AddRenderer(renderer);
+//        vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+//        renderWindowInteractor->SetRenderWindow(renderWindow);
+//        
+//        renderer->AddActor(actor);
+//        renderer->SetBackground(.3, .6, .3); // Background color green
+//        
+//        renderWindow->Render();
+//        renderWindowInteractor->Start();
     }
     
     void OutputVTK::outputMultiscaleForestGeometry(const MultiscaleForest& f) const
