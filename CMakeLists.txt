@@ -10,6 +10,16 @@ include_directories(${Boost_INCLUDE_DIRS})
 add_definitions( "-DHAS_BOOST" )
 endif()
 
+find_package(Trilinos REQUIRED)
+if(Trilinos_FOUND)
+    include_directories(BEFORE ${Trilinos_INCLUDE_DIRS})
+endif()
+
+find_package(MPI)
+if(MPI_CXX_FOUND)
+    include_directories(${MPI_CXX_INCLUDE_PATH})
+endif()
+
 # look for VTK package
 find_package( VTK REQUIRED )
 include(${VTK_USE_FILE})
