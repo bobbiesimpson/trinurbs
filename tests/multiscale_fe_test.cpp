@@ -25,6 +25,8 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 #include "Epetra_IntSerialDenseVector.h"
+#include "Epetra_Import.h"
+
 #include "AztecOO.h"
 #include "Amesos.h"
 
@@ -128,6 +130,8 @@ int main(int argc, char* argv[])
     if(0 == Comm.MyPID())
         std::cout << "Starting assembly....\n";
     
+    std::vector<int> my_element_indices;
+    
     // Now loop over 'local' elements
     for(auto ilocal = 0; ilocal < num_local_els; ++ilocal)
     {
@@ -141,6 +145,9 @@ int main(int argc, char* argv[])
         std::vector<int> conn;
         for(const auto& uval : unsigned_conn)
             conn.push_back(static_cast<int>(uval));
+        
+        // add element indices to global vector
+        my_element_indices.insert(my_element_indices.end(), conn.begin(), conn.end());
         
         // local stiffness matrix terms
         Epetra_SerialDenseMatrix k_local(conn.size(), conn.size());
@@ -167,7 +174,6 @@ int main(int argc, char* argv[])
                 f_local(itest) += basis[itest] * funcval * igpt.getWeight() * jdet;
             }
         }
-//        std::cout << k_local << "\n";
         
         K.InsertGlobalValues(scatter, k_local);
         f.SumIntoGlobalValues(scatter, f_local);
@@ -179,43 +185,47 @@ int main(int argc, char* argv[])
     
     if(0 == Comm.MyPID())
         std::cout << "Starting solver....\n";
-    
+
+    // Now generate the solution to Kx=f
     Epetra_Vector x(map);
 
     Epetra_LinearProblem problem(&K, &x, &f);
     
+    // Use an interative CG solver
     AztecOO solver(problem);
 
     solver.SetAztecOption(AZ_precond, AZ_Jacobi);
     solver.Iterate(100, 1.0E-6);
     
-//    Amesos_BaseSolver* Solver;
-//    Amesos Factory;
-//    std::string SolverType = "Klu";
-//    Solver = Factory.Create(SolverType, problem);
-//    
-//    if (Solver == 0) {
-//        cerr << "Specified solver is not available" << endl;
-//    }
-//    Solver->Solve();
+    //
+    // Output
+    //
     
+    // First determine the set of node indices for the elements local to this process
+    std::sort(my_element_indices.begin(), my_element_indices.end());
+    auto last = std::unique(my_element_indices.begin(), my_element_indices.end());
+    my_element_indices.erase(last, my_element_indices.end());
     
-//        std::cout << K << "\n";
-//        std::cout << f << "\n";
+    // And now generate a map for this set
+    Epetra_Map target_map(-1, my_element_indices.size(), my_element_indices.data(), 0, Comm);
     
-    // output
+    Epetra_Import import(target_map, map);
     
-//    std::cout << x << "\n";
+    // Create a vector with this new local set and populate it with the relevant values
+    Epetra_Vector output_vec(target_map);
+    output_vec.Import(x, import, Epetra_CombineMode::Insert);
+    std::cout << output_vec << "\n";
     
-//    if(0 == Comm.MyPID())
-//    {
-//        
-//        const uint ngridpts = 2;
-//        OutputVTK output("multiscale", ngridpts);
-//        output.outputNodalField(multiscaleforest, "testdata", x);
-//        
-//    }
+    // Create a local map (used by OutputVTK class)
+    std::map<int, double> local_soln_map;
+    for(int i = 0; i < target_map.NumMyElements(); ++i)
+        local_soln_map[target_map.GID(i)] = output_vec[i];
     
+    const uint ngridpts = 2;
+    std::string fname = "multiscale" + std::to_string(Comm.MyPID());
+    OutputVTK output(fname, ngridpts);
+    output.outputNodalField(multiscaleforest, "testdata", local_soln_map, std::vector<int>(my_elements, my_elements + num_local_els));
+
     
 #ifdef HAVE_MPI
     MPI_Finalize();

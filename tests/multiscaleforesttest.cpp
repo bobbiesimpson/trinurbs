@@ -1,4 +1,5 @@
 #include <iostream>
+#include <numeric>
 
 #include "Forest.h"
 #include "Geometry.h"
@@ -158,8 +159,11 @@ int main(int argc, char* argv[])
     std::cout << "volume of multiscale geometry = " << v << "\n";
     
     const uint ngridpts = 2;
+    std::vector<int> element_set(multiscaleforest.elemN());
+    std::iota(element_set.begin(), element_set.end(), 0);
+    
     OutputVTK output("multiscale", ngridpts);
-    output.outputNodalField(multiscaleforest, "testdata", soln);
+    output.outputNodalField(multiscaleforest, "testdata", soln, element_set);
     
     output.outputForestGeometry(multiscaleforest.microForest());
     

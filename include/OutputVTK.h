@@ -67,7 +67,8 @@ namespace trinurbs
         template<typename S>
         void outputNodalField(const MultiscaleForest& f,
                               const std::string& fieldname,
-                              const S& soln,
+                              S& soln,
+                              const std::vector<int>& eset,
                               const uint nlocaldof = 1) const
         {
             const uint nsample = samplePtN();   // number of sample points in each parametric direction
@@ -93,7 +94,7 @@ namespace trinurbs
             uint sample_offset = 0;
             
             // loop over element
-            for(uint i = 0; i < f.elemN(); ++i)
+            for(auto& i : eset)
             {
                 const auto e = f.multiscaleBezierElement(i);
                 const auto gbasisivec = e->globalBasisIVec();
