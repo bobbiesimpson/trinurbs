@@ -9,6 +9,7 @@
 #include "PeriodicForest.h"
 
 #include "Epetra_ConfigDefs.h"
+
 #ifdef HAVE_MPI
 #include "mpi.h"
 #include "Epetra_MpiComm.h"
@@ -24,6 +25,8 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 #include "Epetra_IntSerialDenseVector.h"
+#include "AztecOO.h"
+#include "Amesos.h"
 
 using namespace trinurbs;
 
@@ -103,9 +106,7 @@ int main(int argc, char* argv[])
     << multiscaleforest.microForest().elemN() << " elements (micro), "
     << multiscaleforest.elemN() << " elements total\n\n";
     
-    std::cout << "Process: " << Comm.MyPID() << "\n";
-    
-    long long ndof = multiscaleforest.globalDofN();
+   int ndof = multiscaleforest.globalDofN();
     
     // Map for mpi communication of matrix and vector terms
     Epetra_Map map(ndof, 0, Comm);
@@ -117,13 +118,16 @@ int main(int argc, char* argv[])
     Epetra_FEVector f(map);
     
     // Set up element map for MPI assembly routines
-    long long nel = multiscaleforest.elemN();
+    int nel = multiscaleforest.elemN();
     Epetra_Map element_map(nel, 0, Comm);
     
     // Get data structure corresponding to local elements to this process
     int num_local_els = element_map.NumMyElements();
-    long long* my_elements = element_map.MyGlobalElements64();
+    int* my_elements = element_map.MyGlobalElements();
 
+    if(0 == Comm.MyPID())
+        std::cout << "Starting assembly....\n";
+    
     // Now loop over 'local' elements
     for(auto ilocal = 0; ilocal < num_local_els; ++ilocal)
     {
@@ -139,52 +143,78 @@ int main(int argc, char* argv[])
             conn.push_back(static_cast<int>(uval));
         
         // local stiffness matrix terms
-        //Epetra_SerialDenseMatrix k_local(conn.size(), conn.size());
-        Epetra_SerialDenseMatrix k_local(2,2);
-        k_local(0,0) = 1.0; k_local(1,1) = 1.0;
+        Epetra_SerialDenseMatrix k_local(conn.size(), conn.size());
         
         // local force vector terms
         Epetra_SerialDenseVector f_local(conn.size());
-        //Epetra_IntSerialDenseVector scatter(Copy, conn.data(), conn.size());
-        Epetra_IntSerialDenseVector scatter(2);
-        scatter(0) = 0; scatter(1) = 1;
-        
+        Epetra_IntSerialDenseVector scatter(Copy, conn.data(), conn.size());
         
         // Perform quadrature
-//        for(trinurbs::IElemIntegrate igpt(bel->integrationOrder()); !igpt.isDone(); ++igpt)
-//        {
-//            const auto gpt = igpt.get();
-//            const auto basis = bel->basis(gpt.xi, gpt.eta, gpt.zeta);
-//            const auto jdet = bel->jacDet(gpt.xi, gpt.eta, gpt.zeta);
-//            const auto phys_coord = bel->eval(gpt.xi, gpt.eta, gpt.zeta);
-//            const double funcval = myfunc(phys_coord[0], phys_coord[1], phys_coord[2]);
-//            
-//            for(int itest = 0; itest < conn.size(); ++itest)
-//            {
-//                const auto gtest_i = conn[itest];
-//                for(int itrial = 0; itrial < conn.size(); ++itrial)
-//                    k_local(itest, itrial) += basis[itest] * basis[itrial] * jdet * igpt.getWeight();
-//                
-//
-//                // force vector assembly
-//                f_local(itest) += basis[itest] * funcval * igpt.getWeight() * jdet;
-//            }
-//        }
+        for(trinurbs::IElemIntegrate igpt(bel->integrationOrder()); !igpt.isDone(); ++igpt)
+        {
+            const auto gpt = igpt.get();
+            const auto basis = bel->basis(gpt.xi, gpt.eta, gpt.zeta);
+            const auto jdet = bel->jacDet(gpt.xi, gpt.eta, gpt.zeta);
+            const auto phys_coord = bel->eval(gpt.xi, gpt.eta, gpt.zeta);
+            const double funcval = myfunc(phys_coord[0], phys_coord[1], phys_coord[2]);
+            
+            for(int itest = 0; itest < conn.size(); ++itest)
+            {
+                for(int itrial = 0; itrial < conn.size(); ++itrial)
+                    k_local(itest, itrial) += basis[itest] * basis[itrial] * jdet * igpt.getWeight();
+
+                // force vector assembly
+                f_local(itest) += basis[itest] * funcval * igpt.getWeight() * jdet;
+            }
+        }
 //        std::cout << k_local << "\n";
         
         K.InsertGlobalValues(scatter, k_local);
-//        f.SumIntoGlobalValues(scatter, f_local);
+        f.SumIntoGlobalValues(scatter, f_local);
 
     }
     
     K.GlobalAssemble();
     f.GlobalAssemble();
-
+    
     if(0 == Comm.MyPID())
-    {
-        std::cout << K << "\n";
-        std::cout << f << "\n";
-    }
+        std::cout << "Starting solver....\n";
+    
+    Epetra_Vector x(map);
+
+    Epetra_LinearProblem problem(&K, &x, &f);
+    
+    AztecOO solver(problem);
+
+    solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+    solver.Iterate(100, 1.0E-6);
+    
+//    Amesos_BaseSolver* Solver;
+//    Amesos Factory;
+//    std::string SolverType = "Klu";
+//    Solver = Factory.Create(SolverType, problem);
+//    
+//    if (Solver == 0) {
+//        cerr << "Specified solver is not available" << endl;
+//    }
+//    Solver->Solve();
+    
+    
+//        std::cout << K << "\n";
+//        std::cout << f << "\n";
+    
+    // output
+    
+//    std::cout << x << "\n";
+    
+//    if(0 == Comm.MyPID())
+//    {
+//        
+//        const uint ngridpts = 2;
+//        OutputVTK output("multiscale", ngridpts);
+//        output.outputNodalField(multiscaleforest, "testdata", x);
+//        
+//    }
     
     
 #ifdef HAVE_MPI

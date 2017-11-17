@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
     Epetra_SerialComm Comm;
 #endif
     
+    std::cout << "I'm on process " << Comm.MyPID() << "\n";
+    
     int nel = 3;
     int global_dof_n = nel + 2;
     

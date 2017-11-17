@@ -141,8 +141,15 @@ int main(int argc, char* argv[])
     
     K.setFromTriplets(coefficients.begin(), coefficients.end());
     
+//    std::cout << K << "\n";
+//    std::cout << f << "\n";
+    
     Eigen::SimplicialCholesky<SpMat> chol(K);  // performs a Cholesky factorization of A
     Eigen::VectorXd x_soln = chol.solve(f);
+    
+    std::cout << "SOLUTION!!!!!\n";
+    
+    std::cout << x_soln << "\n";
     
     std::vector<double> soln(multiscaleforest.globalDofN(), 0.0);
     for(size_t i = 0; i < soln.size(); ++i)
