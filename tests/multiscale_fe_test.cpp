@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
     for(int i = 0; i < target_map.NumMyElements(); ++i)
         local_soln_map[target_map.GID(i)] = output_vec[i];
     
-    const uint ngridpts = 2;
+    const uint ngridpts = 10;
     std::string fname = "multiscale" + std::to_string(Comm.MyPID());
     OutputVTK output(fname, ngridpts);
     output.outputNodalField(multiscaleforest, "testdata", local_soln_map, std::vector<int>(my_elements, my_elements + num_local_els));
