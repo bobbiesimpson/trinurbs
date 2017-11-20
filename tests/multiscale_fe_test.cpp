@@ -214,7 +214,6 @@ int main(int argc, char* argv[])
     // Create a vector with this new local set and populate it with the relevant values
     Epetra_Vector output_vec(target_map);
     output_vec.Import(x, import, Epetra_CombineMode::Insert);
-    std::cout << output_vec << "\n";
     
     // Create a local map (used by OutputVTK class)
     std::map<int, double> local_soln_map;
