@@ -128,13 +128,30 @@ int main(int argc, char* argv[])
     int* my_elements = element_map.MyGlobalElements();
 
     if(0 == Comm.MyPID())
-        std::cout << "Starting assembly....\n";
+        std::cout << "Assembly progress....\n";
     
     std::vector<int> my_element_indices;
+    
+    const double barwidth = 70.0;
     
     // Now loop over 'local' elements
     for(auto ilocal = 0; ilocal < num_local_els; ++ilocal)
     {
+        const double progress = static_cast<double>(ilocal) / num_local_els;
+        
+        if(0 == Comm.MyPID())
+        {
+            std::cout << "[";
+            int pos = barwidth * progress;
+            for (int i = 0; i < barwidth; ++i) {
+                if (i < pos) std::cout << "=";
+                else if (i == pos) std::cout << ">";
+                else std::cout << " ";
+            }
+            std::cout << "] " << int(progress * 100.0) << " %\r";
+            std::cout.flush();
+        }
+        
         // global element index
         auto iel = my_elements[ilocal];
         
