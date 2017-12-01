@@ -102,6 +102,15 @@ namespace trinurbs
         init();
     }
     
+    void BSplineSpace::setEquallySpacedKnotVec(const uint nknots,
+                                               const ParamDir dir)
+    {
+        auto& knotvec_copy = knotVec(dir);
+        const double inc = (knotvec.back() - knotvec.front()) / (nknots + 1);
+        
+        
+    }
+    
     void BSplineSpace::graded_hrefine(const uint n, const double coeff)
     {
         for(auto& kv : mKnotVecs)

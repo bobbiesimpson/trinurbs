@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
     solver.Iterate(100, 1.0E-6);
     
     //
-    // Output
+    // Output solution to separate files for each process
     //
     
     // First determine the set of node indices for the elements local to this process
