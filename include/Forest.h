@@ -423,6 +423,21 @@ namespace trinurbs
             clearElementData();
         }
         
+        
+        /// h-refine with specified knot vector
+        void hrefine(const DoubleVec& knots,
+                     const ParamDir dir,
+                     bool clearExistingInternalKnots = true)
+        {
+            if(0 == knots.size())
+                return;
+            for(auto& s : mSpaces)
+                s.hrefine(knots, dir, clearExistingInternalKnots);
+            initNodalConn();
+            clearElementData();
+        }
+        
+        
         /// Apply degree reduction n times
         void degreeReduce(const uint n)
         {

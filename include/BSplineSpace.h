@@ -430,6 +430,12 @@ namespace trinurbs
         /// Apply h-refinement (knot insertion) n times
         void hrefine(const uint n = 1);
         
+        /// H-refine with given knot vector. Flag indicates whether
+        /// to remove existing internal knots.
+        void hrefine(const DoubleVec& knots,
+                     const ParamDir dir,
+                     bool clearExistingInternalKnots = true);
+        
         /// Apply graded h-refinement (knot insertion) n elements
         void graded_hrefine(const uint n, const double coeff);
         
@@ -540,6 +546,13 @@ namespace trinurbs
                 default:
                     throw std::runtime_error("Bad parametric direction in Bspline space");
             }
+        }
+        
+        /// knot vector setter
+        void setKnotVec(const DoubleVec& kvec,
+                        const ParamDir dir)
+        {
+            mKnotVecs[dir] = kvec;
         }
         
         /// Global knot vectors

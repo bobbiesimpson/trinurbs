@@ -108,6 +108,8 @@ namespace trinurbs
                     
                     // get physical coordinate of sample point
                     const Point3D phys_coord = e->eval(samplept.u, samplept.v, samplept.w);
+//                    const double jdet = e->jacDet(samplept.u, samplept.v, samplept.w);
+                    
                     points->InsertNextPoint(phys_coord[0], phys_coord[1], phys_coord[2]);
                     //points->InsertPoint(sample_offset + count, phys_coord.data());
                     

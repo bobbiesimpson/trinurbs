@@ -102,13 +102,55 @@ namespace trinurbs
         init();
     }
     
-    void BSplineSpace::setEquallySpacedKnotVec(const uint nknots,
-                                               const ParamDir dir)
+    void BSplineSpace::hrefine(const DoubleVec& knots,
+                               const ParamDir dir,
+                               bool clearExistingInternalKnots)
     {
-        auto& knotvec_copy = knotVec(dir);
-        const double inc = (knotvec.back() - knotvec.front()) / (nknots + 1);
+        auto knotvec_copy = knotVec(dir);
+        const double start_kval = knotvec_copy.front();
+        const double back_kval = knotvec_copy.back();
         
+        DoubleVec new_kvec{};
+
+        // iterator to start of existing know vector
+        const auto begin_it = knotvec_copy.begin();
         
+        // iterator to first internal knot
+        const auto firstinternal_it = begin_it + degree(dir) + 1;
+        
+        // iterator to set of final knots
+        const auto backknots_it = knotvec_copy.end() - degree(dir) - 1;
+
+        // copy set of front knot values across
+        for(auto it = knotvec_copy.begin(); it < firstinternal_it; ++it)
+            new_kvec.push_back(*it);
+        
+        // copy internal knot if necessary
+        if(!clearExistingInternalKnots)
+        {
+            for(auto it = firstinternal_it; it < backknots_it; ++it)
+                new_kvec.push_back(*it);
+        }
+        
+        // and now insert specified knot values
+        for(const auto& val : knots)
+        {
+            if(val > back_kval || val < start_kval)
+                throw std::runtime_error("Cannot insert knot value outside existing knot interval range. Aborting");
+            
+            new_kvec.push_back(val);
+        }
+        
+        // copy set of back knot values
+        for(auto it = backknots_it; it < knotvec_copy.end(); ++it)
+            new_kvec.push_back(*it);
+        
+        // make sure to sort vector
+        std::sort(new_kvec.begin(), new_kvec.end());
+        
+        // And now set the new knot vector and initiate data structures
+        setKnotVec(new_kvec, dir);
+        init();
     }
     
     void BSplineSpace::graded_hrefine(const uint n, const double coeff)
