@@ -110,6 +110,11 @@ int main(int argc, char* argv[])
     << multiscaleforest.microForest().elemN() << " elements (micro), "
     << multiscaleforest.elemN() << " elements total\n\n";
     
+//    std::string name = "multiscale" + std::to_string(Comm.MyPID());
+//    OutputVTK output2(name, 2);
+//    output2.outputMultiscaleForestGeometry(multiscaleforest);
+//    return EXIT_SUCCESS;
+    
    int ndof = multiscaleforest.globalDofN();
     
     // Map for mpi communication of matrix and vector terms
@@ -131,6 +136,8 @@ int main(int argc, char* argv[])
 
     if(0 == Comm.MyPID())
         std::cout << "Assembly progress....\n";
+    
+    double my_volume = 0.0;  // volume of elements on this process
     
     std::vector<int> my_element_indices;
     
@@ -192,6 +199,8 @@ int main(int argc, char* argv[])
                 // force vector assembly
                 f_local(itest) += basis[itest] * funcval * igpt.getWeight() * jdet;
             }
+            
+            my_volume += jdet * igpt.getWeight();
         }
         
         K.InsertGlobalValues(scatter, k_local);
@@ -201,6 +210,8 @@ int main(int argc, char* argv[])
     
     K.GlobalAssemble();
     f.GlobalAssemble();
+    
+
     
     if(0 == Comm.MyPID())
         std::cout << "Starting solver....\n";
@@ -239,10 +250,16 @@ int main(int argc, char* argv[])
     for(int i = 0; i < target_map.NumMyElements(); ++i)
         local_soln_map[target_map.GID(i)] = output_vec[i];
     
-    const uint ngridpts = 2;
+    const uint ngridpts = 4;
     std::string fname = "multiscale" + std::to_string(Comm.MyPID());
     OutputVTK output(fname, ngridpts);
     output.outputNodalField(multiscaleforest, "testdata", local_soln_map, std::vector<int>(my_elements, my_elements + num_local_els));
+    
+    double global_volume = 0.0;
+    Comm.SumAll(&my_volume, &global_volume, 1);
+    
+    if(0 == Comm.MyPID())
+        std::cout << "\n\nVolume of model = " << global_volume << "\n";
 
     
 #ifdef HAVE_MPI
