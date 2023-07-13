@@ -260,7 +260,7 @@ namespace trinurbs
             auto i_new = x.begin(); // iterator to beginning of new knots
             for(const auto& k : knotvec) {
                 //std::cout << *i_new << "\t" << k << "\n";
-                while(k > *i_new && i_new != x.end()) {
+                while(i_new != x.end() && k > *i_new) {
                     refined_kv.push_back(*i_new);
                     ++i_new;
                 }
